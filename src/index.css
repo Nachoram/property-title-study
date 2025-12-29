@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-legal-50: #f0f4f8;
+  --color-legal-100: #d9e2ec;
+  --color-legal-200: #bcccdc;
+  --color-legal-300: #9fb3c8;
+  --color-legal-400: #829ab1;
+  --color-legal-500: #627d98;
+  --color-legal-600: #486581;
+  --color-legal-700: #334e68;
+  --color-legal-800: #243b53;
+  --color-legal-900: #102a43;
+}
+
+@layer base {
+  body {
+    /* bg-slate-50 text-slate-900 */
+    /* Ensure slate is available, or use gray with specific hex if uncertain, 
+       but Tailwind 4 mostly keeps standard palette availability dynamically */
+    @apply bg-slate-50 text-slate-900 font-sans antialiased;
+  }
+}
