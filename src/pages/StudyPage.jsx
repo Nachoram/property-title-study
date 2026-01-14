@@ -53,6 +53,30 @@ const TRANSACTION_TITLES = [
     { id: 'aporte_capital', label: 'Aporte de Capital a Empresa' },
 ];
 
+const DOCTYPE_TABLE_MAP = {
+    'dominio_vigente': 'ocr_dominio_vigente',
+    'gp_30_anos': 'ocr_gp_30_anos',
+    'escritura_cv': 'ocr_escritura_cv',
+    'deuda_contribuciones': 'ocr_deuda_contribuciones',
+    'avaluo_fiscal': 'ocr_avaluo_fiscal',
+    'recepcion_final': 'ocr_recepcion_final',
+    'numero_municipal': 'ocr_certificado_numero',
+    'no_expropiacion_muni': 'ocr_expropiacion_municipal',
+    'no_expropiacion_serviu': 'ocr_no_expropiacion_serviu',
+    'posesion_efectiva': 'ocr_posesion_efectiva',
+    'cip': 'ocr_cip',
+    'reglamento_copropiedad': 'ocr_reglamento_copropiedad',
+    'plano_sag': 'ocr_rural_sag',
+    'plano_copropiedad': 'ocr_plano_copropiedad',
+    'asignacion_roles': 'ocr_asignacion_roles',
+    'inscripcion_anterior': 'ocr_inscripcion_anterior',
+    'impuesto_herencia': 'ocr_impuesto_herencia',
+    'inscripcion_herencia': 'ocr_inscripcion_herencia',
+    'constitucion_sociedad': 'ocr_constitucion_sociedad',
+    'vigencia_poderes': 'ocr_poderes',
+    'constitucion_servidumbre': 'ocr_inscripcion_servidumbre'
+};
+
 // --- Components ---
 
 const StatusPanel = ({ currentStep, progress, total }) => {
@@ -429,6 +453,41 @@ export default function StudyPage() {
                     .from('legal_documents')
                     .getPublicUrl(filePath);
 
+                // --- NEW LOGIC: Insert into specific OCR table ---
+                // Handle dynamic keys (e.g., inscripcion_anterior_1 -> inscripcion_anterior)
+                let mapKey = key;
+                if (key.startsWith('inscripcion_anterior_')) {
+                    mapKey = 'inscripcion_anterior';
+                }
+
+                const targetTable = DOCTYPE_TABLE_MAP[mapKey];
+                if (targetTable) {
+                    console.log(`Inserting into ${targetTable} for doc ${key}`);
+                    try {
+                        const { error: insertError } = await supabase
+                            .from(targetTable)
+                            .insert({
+                                estudio_id: studyId,
+                                operacion_id: operationId,
+                                user_id: user.id,
+                                documento_url: publicUrl,
+                                nombre_archivo: file.name,
+                                estado: 'Pendiente'
+                            });
+
+                        if (insertError) {
+                            console.error(`Error inserting into ${targetTable}:`, insertError);
+                            // We don't block the whole flow, but we log it.
+                            toast.error(`Error al registrar en tabla OCR: ${insertError.message}`);
+                        } else {
+                            console.log(`Successfully reserved row in ${targetTable}`);
+                        }
+                    } catch (err) {
+                        console.error(`Exception inserting into ${targetTable}:`, err);
+                    }
+                }
+
+                // Also update solicitud_documentos if it exists (for Stage 3 tracking)
                 if (state.stage === 3) {
                     updates.push(supabase.from('solicitud_documentos').update({ estado: 'Completado', documento_url: publicUrl, subido: true }).eq('id', state.dbId));
                 }
