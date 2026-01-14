@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
                 setUser(initialSession?.user ?? null);
 
                 if (initialSession?.user) {
-                    await fetchProfile(initialSession.user.id);
+                    fetchProfile(initialSession.user.id);
                 }
             } catch (error) {
                 console.error('Error getting initial session:', error);
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
                     setUser(currentSession?.user ?? null);
 
                     if (currentSession?.user) {
-                        await fetchProfile(currentSession.user.id);
+                        fetchProfile(currentSession.user.id);
                     } else {
                         setProfile(null);
                     }

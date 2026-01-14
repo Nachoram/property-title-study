@@ -181,118 +181,38 @@ const DOC_CATALOG = {
  * @returns {Array} Lista de documentos requeridos
  */
 export function generateRequiredDocuments(formData) {
-    const { propertyType, hasReglamento, hasServidumbre, transactionsDetails } = formData;
+    const { propertyType, inscriptionsCount } = formData;
 
-    // 1. Array base (siempre requeridos)
+    // MOMENTO 1: Documentos base del CBR y otros fijos
     let docs = [
         DOC_CATALOG.DOMINIO_VIGENTE,
         DOC_CATALOG.GP_30_ANOS,
-        DOC_CATALOG.NO_EXPROPIACION_MUNI,
-        DOC_CATALOG.NO_EXPROPIACION_SERVIU,
         DOC_CATALOG.DEUDA_CONTRIBUCIONES,
-        DOC_CATALOG.AVALUO_FISCAL
+        DOC_CATALOG.AVALUO_FISCAL,
+        DOC_CATALOG.NO_EXPROPIACION_MUNI,
+        DOC_CATALOG.NO_EXPROPIACION_SERVIU
     ];
 
-    // 2. Reglas por Tipo de Propiedad
-
-    // -- Casas y Sitios Urbanos
-    if (propertyType === 'casa' || propertyType === 'sitio_eriazo' || propertyType === 'local_comercial') {
+    // Condicionales por tipo de propiedad
+    const needsBuildingDocs = ['casa', 'departamento', 'bodega', 'estacionamiento', 'local_comercial'].includes(propertyType);
+    if (needsBuildingDocs) {
         docs.push(DOC_CATALOG.NUMERO_MUNICIPAL);
-        docs.push(DOC_CATALOG.CIP);
-    }
-
-    if (propertyType === 'casa' || propertyType === 'local_comercial') {
         docs.push(DOC_CATALOG.RECEPCION_FINAL);
     }
 
-    // -- Copropiedad (Departamentos, Bodegas, etc.)
-    const isCopropiedad = ['departamento', 'bodega', 'estacionamiento'].includes(propertyType);
-    if (isCopropiedad || hasReglamento === true) {
-        docs.push(DOC_CATALOG.REGLAMENTO_COPROPIEDAD);
-        docs.push(DOC_CATALOG.PLANO_COPROPIEDAD);
-    }
-
-    // -- Parcelas
-    if (propertyType === 'parcela') {
-        docs.push(DOC_CATALOG.PLANO_SAG);
-        docs.push(DOC_CATALOG.ASIGNACION_ROLES);
-        docs.push(DOC_CATALOG.CIP); // También es útil para ver usos de suelo rural
-    }
-
-    // 3. Reglas por Condiciones Especiales
-    if (hasServidumbre === true) {
-        docs.push(DOC_CATALOG.ESCRITURA_SERVIDUMBRE);
-        // Podríamos pedir planos también
-    }
-
-    // 4. Reglas por Cadenas de Título (Transacciones)
-    // Iteramos sobre las transacciones declaradas para pedir antecedentes específicos
-    if (transactionsDetails && transactionsDetails.length > 0) {
-        transactionsDetails.forEach((tx, index) => {
-            const txNum = index + 1;
-            const type = tx.type;
-
-            // Manual date formatting (YYYY-MM-DD -> DD-MM-YYYY)
-            let dateStr = '';
-            if (tx.date && typeof tx.date === 'string') {
-                const parts = tx.date.split('-');
-                if (parts.length === 3) {
-                    dateStr = ` (${parts[2]}-${parts[1]}-${parts[0]})`;
-                }
-            }
-
-            // Para todos los títulos, pedir la escritura e inscripción
-            // Usamos copias del objeto para modificar el label con el número de transacción
-
-            const titLabel = `Título ${txNum}`;
-
-            if (type === 'compraventa' || type === 'permuta' || type === 'donacion' || type === 'aporte_capital') {
-                docs.push({
-                    ...DOC_CATALOG.ESCRITURA_COMPRAVENTA,
-                    id: `tx_${txNum}_escritura`,
-                    label: `Escritura ${titLabel} - ${typeNames(type)}${dateStr}`,
-                    description: 'Copia de la escritura pública constitutiva.',
-                    alert: `Transacción N° ${txNum}`
-                });
-
-                docs.push({
-                    ...DOC_CATALOG.INSCRIPCION_DOMINIO_ANTERIOR,
-                    id: `tx_${txNum}_inscripcion`,
-                    label: `Inscripción ${titLabel}${dateStr}`,
-                    alert: `Transacción N° ${txNum}`
-                });
-            }
-
-            // Reglas específicas: Herencia
-            if (type === 'herencia') {
-                docs.push({
-                    ...DOC_CATALOG.POSESION_EFECTIVA,
-                    id: `tx_${txNum}_posesion`,
-                    label: `Posesión Efectiva ${titLabel}${dateStr}`,
-                    alert: 'Sucesión por causa de muerte'
-                });
-                docs.push({
-                    ...DOC_CATALOG.INSCRIPCION_ESPECIAL_HERENCIA,
-                    id: `tx_${txNum}_especial_herencia`,
-                    label: `Inscripción Especial Herencia ${titLabel}${dateStr}`
-                });
-                docs.push({
-                    ...DOC_CATALOG.IMPUESTO_HERENCIA,
-                    id: `tx_${txNum}_impuesto`,
-                    label: `Impuesto Herencia ${titLabel}${dateStr}`
-                });
-            }
-
-            // Reglas específicas: Personas Jurídicas involucradas (Aporte Capital o Compraventas complejas)
-            if (type === 'aporte_capital') {
-                docs.push({
-                    ...DOC_CATALOG.CONSTITUCION_SOCIEDAD,
-                    id: `tx_${txNum}_sociedad`,
-                    label: `Constitución Sociedad ${titLabel}${dateStr}`,
-                    alert: 'Verificar existencia legal'
-                });
-            }
-        });
+    // Dinámicos: Una solicitud de inscripción por cada unidad indicada (si es > 1)
+    // El Dominio Vigente (Momento 1) cuenta como la primera inscripción.
+    // Si el usuario marcó más de 1, pedimos las copias de las inscripciones anteriores.
+    const count = parseInt(inscriptionsCount) || 1;
+    if (count > 1) {
+        for (let i = 1; i < count; i++) {
+            docs.push({
+                ...DOC_CATALOG.INSCRIPCION_DOMINIO_ANTERIOR,
+                id: `inscripcion_anterior_${i}`,
+                label: `Copia Inscripción Anterior #${i} (CBR)`,
+                description: `Documento que acredita la propiedad previo al título vigente #${i}.`
+            });
+        }
     }
 
     return docs;

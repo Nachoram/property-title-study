@@ -9,6 +9,7 @@ import {
     XCircle,
     ShieldCheck,
     FileCheck,
+    Send,
     Landmark,
     Building,
     ChevronDown,
@@ -60,7 +61,7 @@ const StatusPanel = ({ currentStep, progress, total }) => {
     const steps = [
         { label: 'Configuración', status: currentStep === 1 ? 'current' : 'completed' },
         { label: 'Documentación', status: currentStep === 2 ? 'current' : (currentStep > 2 ? 'completed' : 'pending') },
-        { label: 'Análisis', status: 'pending' },
+        { label: 'Revisión', status: currentStep === 3 ? 'current' : (currentStep > 3 ? 'completed' : 'pending') },
         { label: 'Informe', status: 'pending' }
     ];
 
@@ -77,7 +78,7 @@ const StatusPanel = ({ currentStep, progress, total }) => {
                     <div className="flex-1 md:w-64 h-3 bg-slate-100 rounded-full overflow-hidden">
                         <div
                             className="h-full bg-blue-600 transition-all duration-700 ease-out"
-                            style={{ width: `${currentStep === 1 ? 25 : 25 + (percentage * 0.75)}%` }}
+                            style={{ width: `${currentStep === 1 ? 25 : currentStep === 2 ? 25 + (percentage * 0.5) : 75 + (percentage * 0.25)}%` }}
                         />
                     </div>
                     <span className="font-bold text-blue-700">{currentStep === 1 ? '25%' : `${Math.round(25 + (percentage * 0.75))}%`}</span>
@@ -225,6 +226,7 @@ export default function StudyPage() {
 
     const [stage2Requests, setStage2Requests] = useState([]);
     const [stage3Requests, setStage3Requests] = useState([]);
+    const [propertyName, setPropertyName] = useState('');
     const [propertyType, setPropertyType] = useState('');
     const [studyPurpose, setStudyPurpose] = useState('');
     const [hasServidumbre, setHasServidumbre] = useState(null);
@@ -233,10 +235,11 @@ export default function StudyPage() {
     const [transactionsDetails, setTransactionsDetails] = useState([{ id: 1, type: '' }]);
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDocsSaved, setIsDocsSaved] = useState(false);
     const [studyId, setStudyId] = useState(null);
 
     // Generate unique operation ID for new studies
-    const [operationId, setOperationId] = useState(() => {
+    const [operationId] = useState(() => {
         if (operacionId && operacionId !== 'nuevo') {
             return operacionId;
         }
@@ -248,9 +251,9 @@ export default function StudyPage() {
             // Fase 2 is now handled differently or logic is being restructured
             // For now, we fetch Phase 3 specific requests
             const { data: s3Data } = await supabase
-                .from('solicitud_fase3')
+                .from('solicitud_documentos')
                 .select('*')
-                .eq('numero_operacion', operationId);
+                .eq('operacion_id', operationId);
 
             if (s3Data) {
                 setStage3Requests(s3Data);
@@ -265,7 +268,7 @@ export default function StudyPage() {
                                 file: null,
                                 stage: 3,
                                 dbId: req.id,
-                                label: req.tipo_documento,
+                                label: req.nombre_documento,
                                 personaNom: req.nombre_persona,
                                 personaRut: req.rut_persona,
                                 description: `Documento para ${req.nombre_persona}`,
@@ -286,8 +289,8 @@ export default function StudyPage() {
                 {
                     event: 'INSERT',
                     schema: 'public',
-                    table: 'solicitud_fase3',
-                    filter: `numero_operacion=eq.${operationId}`
+                    table: 'solicitud_documentos',
+                    filter: `operacion_id=eq.${operationId}`
                 },
                 (payload) => {
                     const newReq = payload.new;
@@ -300,13 +303,13 @@ export default function StudyPage() {
                             file: null,
                             stage: 3,
                             dbId: newReq.id,
-                            label: newReq.tipo_documento,
+                            label: newReq.nombre_documento,
                             personaNom: newReq.nombre_persona,
                             personaRut: newReq.rut_persona,
                             description: `Documento para ${newReq.nombre_persona}`,
                         }
                     }));
-                    toast.info(`Nueva solicitud Fase 3: ${newReq.tipo_documento} para ${newReq.nombre_persona}`, { duration: 5000 });
+                    toast.info(`Nueva solicitud documento: ${newReq.nombre_documento} para ${newReq.nombre_persona}`, { duration: 5000 });
                 }
             )
             .subscribe();
@@ -334,12 +337,13 @@ export default function StudyPage() {
             const formData = {
                 numero_operacion: operationId,
                 user_id: user.id,
+                nombre_propiedad: propertyName,
                 tipo_propiedad: propertyType,
                 finalidad_estudio: studyPurpose,
                 tiene_servidumbre: hasServidumbre,
                 tiene_reglamento: hasReglamento,
                 cantidad_transacciones: transactionsCount,
-                detalle_transacciones: transactionsDetails.filter(t => t.type),
+                detalle_transacciones: [], // No longer asking for details in this phase
                 estado: 'En Documentación'
             };
 
@@ -348,7 +352,7 @@ export default function StudyPage() {
                 propertyType,
                 hasReglamento,
                 hasServidumbre,
-                transactionsDetails: transactionsDetails.filter(t => t.type)
+                inscriptionsCount: transactionsCount
             });
 
             setRequiredDocs(generatedDocs);
@@ -367,36 +371,53 @@ export default function StudyPage() {
             });
 
             // 2. Save to Supabase
+            console.log('Upserting formData:', formData);
             const { data, error } = await supabase
                 .from('estudios_titulos')
                 .upsert(formData, { onConflict: 'numero_operacion' })
-                .select()
-                .single();
+                .select();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase upsert error:', error);
+                throw error;
+            }
 
-            setStudyId(data.id);
+            if (!data || data.length === 0) {
+                console.warn('Upsert returned no data');
+                throw new Error('No se recibió confirmación de la base de datos');
+            }
+
+            console.log('Upsert success, received data:', data[0]);
+            setStudyId(data[0].id);
             toast.success('Configuración guardada', { id: toastId });
             return true;
         } catch (error) {
-            console.error('Error saving form:', error);
-            toast.error('Error al guardar configuración', { id: toastId });
+            console.error('Error in saveFormData:', error);
+            const errorMsg = error.message || (typeof error === 'string' ? error : 'Error desconocido');
+            toast.error(`Error al guardar: ${errorMsg}`, { id: toastId });
             return false;
         }
     };
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
-        const toastId = toast.loading('Procesando documentos...');
+        const toastId = toast.loading('Guardando documentos...');
         try {
-            const stage1Urls = {};
             const updates = [];
             for (const [key, state] of Object.entries(docStates)) {
                 if (state.status !== 'uploaded' || !state.file) continue;
                 const file = state.file;
                 const extension = file.name.split('.').pop();
-                const fileName = `${operationId}_${key}.${extension}`;
-                const filePath = `${operationId}/${fileName}`;
+
+                // Use consistent naming strategy
+                let fileName = `${operationId}_${key}.${extension}`;
+                // Special case for 'compraventa' to ensure consistent triggers if needed
+                if (key === 'compraventa') {
+                    fileName = `${operationId}/${operationId}_compraventa.${extension}`;
+                } else {
+                    fileName = `${operationId}/${fileName}`;
+                }
+                const filePath = fileName;
 
                 const { error: storageError } = await supabase.storage
                     .from('legal_documents')
@@ -408,33 +429,70 @@ export default function StudyPage() {
                     .from('legal_documents')
                     .getPublicUrl(filePath);
 
-                if (state.stage === 1) {
-                    stage1Urls[key] = publicUrl;
-                } else if (state.stage === 3) {
-                    updates.push(supabase.from('solicitud_fase3').update({ estado: 'Completado', documento_url: publicUrl }).eq('id', state.dbId));
+                if (state.stage === 3) {
+                    updates.push(supabase.from('solicitud_documentos').update({ estado: 'Completado', documento_url: publicUrl, subido: true }).eq('id', state.dbId));
                 }
             }
 
-            // Phase 1 URLs are handled by individual OCR tables or a consolidated log
-            // Since antecedentes_generales_doc is removed, we'll proceed with analysis trigger
             await Promise.all(updates);
 
-            // Trigger n8n webhook for Phase 3 analysis
-            if (Object.keys(stage1Urls).length > 0) {
-                await triggerN8nAnalysis(stage1Urls);
+            if (currentStep === 2) {
+                setIsDocsSaved(true);
+                toast.success('Documentos guardados correctamente. Ahora puedes enviar a revisión.', { id: toastId });
+            } else {
+                toast.success('Documento confirmado y enviado para análisis.', { id: toastId });
             }
 
-            toast.success('Documentos enviados correctamente', { id: toastId });
-
-            // Redirect to dashboard after successful submission
-            setTimeout(() => {
-                navigate('/dashboard');
-            }, 2000);
         } catch (error) {
             console.error("Submit error:", error);
-            toast.error("Error al enviar documentos", { id: toastId });
+            toast.error("Error al guardar documentos", { id: toastId });
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleSendToReview = async () => {
+        const toastId = toast.loading('Enviando a revisión...');
+        try {
+            // 1. Fetch all documents via RPC
+            const { data: documents, error } = await supabase
+                .rpc('get_operation_documents', { p_numero_operacion: operationId });
+
+            if (error) {
+                console.error("RPC Error:", error);
+                throw new Error("Error al obtener los documentos guardados.");
+            }
+
+            // 2. Prepare webhook payload
+            const payload = {
+                numero_operacion: operationId,
+                user_id: user?.id,
+                estudio_id: studyId,
+                documents: documents || [],
+                metadata: {
+                    nombre_propiedad: propertyName,
+                    tipo_propiedad: propertyType
+                },
+                timestamp: new Date().toISOString()
+            };
+
+            // 3. Send to Webhook via Supabase Edge Function (Proxy) to avoid CORS
+            const { data: result, error: invokeError } = await supabase.functions.invoke('send-to-revision', {
+                body: payload
+            });
+
+            if (invokeError || !result?.success) {
+                console.error("Invoke/Railway Error:", invokeError || result);
+                throw new Error(result?.data || result?.error || "Error al llamar a la función de envío.");
+            }
+
+            console.log("Send to review successful:", result);
+            setCurrentStep(3);
+            toast.success('Estudio enviado a revisión correctamente', { id: toastId });
+
+        } catch (error) {
+            console.error("Error sending to review:", error);
+            toast.error(`Error al enviar a revisión: ${error.message}`, { id: toastId });
         }
     };
 
@@ -459,8 +517,9 @@ export default function StudyPage() {
                         url: url
                     })),
                     metadata: {
+                        nombre_propiedad: propertyName,
                         property_type: propertyType,
-                        transactions_count: transactionsCount,
+                        inscriptions_count: transactionsCount,
                         has_servidumbre: hasServidumbre,
                         has_reglamento: hasReglamento
                     }
@@ -475,6 +534,58 @@ export default function StudyPage() {
     const handleSignOut = async () => {
         await signOut();
         navigate('/login');
+    };
+
+    const renderRequestCard = (req) => {
+        const key = `s3_${req.id}`;
+        const state = docStates[key];
+        const isUploaded = state?.status === 'uploaded';
+
+        return (
+            <div key={key} className={`p-4 rounded-xl border transition-all ${isUploaded ? 'bg-green-50 border-green-200' : 'bg-white border-blue-100 shadow-sm'}`}>
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${isUploaded ? 'bg-green-100 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
+                            {['titulos', 'legal', 'escritura_cv', 'inscripcion_anterior', 'posesion_efectiva', 'hipoteca', 'gp'].includes(req.tipo_documento?.toLowerCase()) ? <Scroll size={18} /> : <FileCheck size={18} />}
+                        </div>
+                        <div>
+                            <p className="font-bold text-slate-900 leading-tight">{req.nombre_documento || req.tipo_documento}</p>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                {req.nombre_persona} {req.rut_persona ? `(RUT: ${req.rut_persona})` : ''}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        {isUploaded ? (
+                            <div className="flex items-center gap-1 text-green-600 text-xs font-bold bg-green-100 px-2 py-1 rounded">
+                                <CheckCircle size={14} /> LISTO
+                            </div>
+                        ) : (
+                            <label className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer hover:bg-blue-700 transition-colors">
+                                <Upload size={12} /> SUBIR
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    accept=".pdf,.png,.jpg,.jpeg"
+                                    onChange={(e) => {
+                                        if (e.target.files?.[0]) handleUpload(key, e.target.files[0]);
+                                    }}
+                                />
+                            </label>
+                        )}
+                    </div>
+                </div>
+                {isUploaded && !isSubmitting && (
+                    <button
+                        onClick={handleSubmit}
+                        className="mt-3 w-full py-2 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600 flex items-center justify-center gap-2 transition-colors"
+                    >
+                        <Send size={14} /> Confirmar Envío al Analista
+                    </button>
+                )}
+            </div>
+        );
     };
 
     return (
@@ -517,7 +628,7 @@ export default function StudyPage() {
                             {operacionId === 'nuevo' ? 'Nuevo Estudio de Títulos' : `Estudio #${operationId}`}
                         </h1>
                         <p className="text-slate-500">
-                            {currentStep === 1 ? 'Paso 1: Configuración de la propiedad' : 'Paso 2: Carga de documentos'}
+                            {currentStep === 1 ? 'Paso 1: Configuración de la propiedad' : currentStep === 2 ? 'Paso 2: Carga de documentos' : 'Paso 3: Revisión del estudio'}
                         </p>
                     </div>
                     {currentStep === 2 && (
@@ -536,322 +647,244 @@ export default function StudyPage() {
 
                 {currentStep === 1 ? (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Tipo de Propiedad</label>
-                                <div className="relative">
-                                    <select
-                                        value={propertyType}
-                                        onChange={(e) => setPropertyType(e.target.value)}
-                                        className="w-full appearance-none bg-slate-50 border border-slate-300 rounded-lg px-4 py-3 pr-10 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                    >
-                                        <option value="" disabled>Seleccione el tipo...</option>
-                                        {PROPERTY_TYPES.map(type => <option key={type.id} value={type.id}>{type.label}</option>)}
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
-                                </div>
-                            </div>
-
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Finalidad del Estudio</label>
-                                <div className="relative">
-                                    <select
-                                        value={studyPurpose}
-                                        onChange={(e) => setStudyPurpose(e.target.value)}
-                                        className="w-full appearance-none bg-slate-50 border border-slate-300 rounded-lg px-4 py-3 pr-10 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                    >
-                                        <option value="" disabled>Seleccione la finalidad...</option>
-                                        {STUDY_PURPOSES.map(purpose => <option key={purpose.id} value={purpose.id}>{purpose.label}</option>)}
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
-                                </div>
-                            </div>
-                        </div>
-
+                        {/* Paso 1: Configuración */}
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
-                            <label className="block text-sm font-medium text-slate-700 mb-4">¿Existe alguna servidumbre sobre la propiedad?</label>
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <button onClick={() => setHasServidumbre(true)} className={`flex-1 py-4 px-6 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-3 ${hasServidumbre === true ? 'bg-blue-50 border-blue-600 text-blue-700 shadow-md transform scale-[1.02]' : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'}`}>
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${hasServidumbre === true ? 'border-blue-600 bg-white' : 'border-slate-300'}`}>{hasServidumbre === true && <div className="w-3 h-3 bg-blue-600 rounded-full" />}</div>
-                                    <span className="font-bold">Sí, existe servidumbre</span>
-                                </button>
-                                <button onClick={() => setHasServidumbre(false)} className={`flex-1 py-4 px-6 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-3 ${hasServidumbre === false ? 'bg-blue-50 border-blue-600 text-blue-700 shadow-md transform scale-[1.02]' : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'}`}>
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${hasServidumbre === false ? 'border-blue-600 bg-white' : 'border-slate-300'}`}>{hasServidumbre === false && <div className="w-3 h-3 bg-blue-600 rounded-full" />}</div>
-                                    <span className="font-bold">No existe servidumbre</span>
-                                </button>
-                            </div>
-                        </div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Nombre de la Propiedad</label>
+                            <input
+                                type="text"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                placeholder="Ej: Departamento Vitacura, Casa Los Trapenses..."
+                                value={propertyName}
+                                onChange={(e) => setPropertyName(e.target.value)}
+                            />
 
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
-                            <label className="block text-sm font-medium text-slate-700 mb-4">¿Existe reglamento de copropiedad inscrito?</label>
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <button onClick={() => setHasReglamento(true)} className={`flex-1 py-4 px-6 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-3 ${hasReglamento === true ? 'bg-blue-50 border-blue-600 text-blue-700 shadow-md transform scale-[1.02]' : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'}`}>
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${hasReglamento === true ? 'border-blue-600 bg-white' : 'border-slate-300'}`}>{hasReglamento === true && <div className="w-3 h-3 bg-blue-600 rounded-full" />}</div>
-                                    <span className="font-bold">Sí, existe reglamento</span>
-                                </button>
-                                <button onClick={() => setHasReglamento(false)} className={`flex-1 py-4 px-6 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-3 ${hasReglamento === false ? 'bg-blue-50 border-blue-600 text-blue-700 shadow-md transform scale-[1.02]' : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'}`}>
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${hasReglamento === false ? 'border-blue-600 bg-white' : 'border-slate-300'}`}>{hasReglamento === false && <div className="w-3 h-3 bg-blue-600 rounded-full" />}</div>
-                                    <span className="font-bold">No existe reglamento</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
-                            <label className="block text-sm font-medium text-slate-700 mb-4">¿Cuántas transacciones ha tenido la propiedad en los últimos 10 años?</label>
-                            <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
-                                {[0, 1, 2, 3, 4, '5+'].map((val) => {
-                                    const numVal = typeof val === 'string' ? 5 : val;
-                                    const isSelected = val === '5+' ? transactionsCount >= 5 : transactionsCount === val;
-                                    return (
-                                        <button
-                                            key={val}
-                                            onClick={() => setTransactionsCount(numVal)}
-                                            className={`py-3 px-2 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-1 ${isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-md transform scale-[1.05]' : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-slate-200 hover:bg-white'}`}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Tipo de Propiedad</label>
+                                    <div className="relative">
+                                        <select
+                                            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg appearance-none bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                            value={propertyType}
+                                            onChange={(e) => setPropertyType(e.target.value)}
                                         >
-                                            <span className="text-xl font-bold">{val}</span>
-                                            <span className="text-[10px] uppercase font-medium opacity-80">{val === 1 ? 'Título' : 'Títulos'}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-100 flex items-start gap-3">
-                                <div className="bg-blue-100 p-1.5 rounded-full text-blue-600 shrink-0"><FileText size={14} /></div>
-                                <p className="text-xs text-slate-600 leading-relaxed">
-                                    {transactionsCount === 0 ? "Sin transacciones recientes." : transactionsCount === 1 ? "Propiedad con título único." : transactionsCount < 5 ? `Se han detectado ${transactionsCount} títulos.` : "Múltiples transacciones."}
-                                </p>
-                            </div>
-                            {transactionsCount > 0 && (
-                                <div className="mt-8 space-y-4 pt-6 border-t border-slate-100 animate-in fade-in slide-in-from-top-4">
-                                    <h4 className="text-sm font-bold text-slate-800">Detalle de Títulos</h4>
-                                    <div className="grid grid-cols-1 gap-3">
-                                        {Array.from({ length: transactionsCount }).map((_, index) => (
-                                            <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-3 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-                                                <span className="text-sm font-semibold text-slate-700 w-20">Título {index + 1}:</span>
-                                                <select
-                                                    value={transactionsDetails[index]?.type || ''}
-                                                    onChange={(e) => {
-                                                        const newDetails = [...transactionsDetails];
-                                                        if (!newDetails[index]) newDetails[index] = { id: index + 1 };
-                                                        newDetails[index].type = e.target.value;
-                                                        setTransactionsDetails(newDetails);
-                                                    }}
-                                                    className="flex-1 bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                                                >
-                                                    <option value="" disabled>Seleccione el acto jurídico...</option>
-                                                    {TRANSACTION_TITLES.map(title => <option key={title.id} value={title.id}>{title.label}</option>)}
-                                                </select>
-                                                <input
-                                                    type="date"
-                                                    value={transactionsDetails[index]?.date || ''}
-                                                    onChange={(e) => {
-                                                        const newDetails = [...transactionsDetails];
-                                                        if (!newDetails[index]) newDetails[index] = { id: index + 1 };
-                                                        newDetails[index].date = e.target.value;
-                                                        setTransactionsDetails(newDetails);
-                                                    }}
-                                                    className="w-full sm:w-40 bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-600"
-                                                />
-                                            </div>
-                                        ))}
+                                            <option value="">Seleccionar...</option>
+                                            {PROPERTY_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                                        </select>
+                                        <Building className="absolute left-3 top-2.5 text-slate-400" size={18} />
+                                        <ChevronDown className="absolute right-3 top-2.5 text-slate-400 pointer-events-none" size={18} />
                                     </div>
                                 </div>
-                            )}
-                            <div className="mt-12 flex justify-end">
-                                <button
-                                    onClick={async () => {
-                                        if (!propertyType || !studyPurpose) {
-                                            toast.error("Por favor completa los campos principales");
-                                            return;
-                                        }
-
-                                        const filledTransactions = transactionsDetails.filter(t => t.type).length;
-                                        if (transactionsCount > 0 && filledTransactions < transactionsCount) {
-                                            toast.error(`Por favor define el tipo de acto jurídico para los ${transactionsCount} títulos.`);
-                                            return;
-                                        }
-
-                                        const saved = await saveFormData();
-                                        if (saved) {
-                                            setCurrentStep(2);
-                                            window.scrollTo(0, 0);
-                                        }
-                                    }}
-                                    className="bg-blue-600 text-white px-10 py-4 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg flex items-center gap-3 group"
-                                >
-                                    Continuar a Documentación <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                                </button>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Finalidad del Estudio</label>
+                                    <div className="relative">
+                                        <select
+                                            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg appearance-none bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                            value={studyPurpose}
+                                            onChange={(e) => setStudyPurpose(e.target.value)}
+                                        >
+                                            <option value="">Seleccionar...</option>
+                                            {STUDY_PURPOSES.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+                                        </select>
+                                        <Map className="absolute left-3 top-2.5 text-slate-400" size={18} />
+                                        <ChevronDown className="absolute right-3 top-2.5 text-slate-400 pointer-events-none" size={18} />
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="animate-in fade-in slide-in-from-left-4 duration-500 space-y-12 pb-20">
-                        {/* Header de Fase 2 */}
-                        <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm mb-8">
-                            <h2 className="text-2xl font-bold text-slate-900 mb-2">Carga de Documentación</h2>
-                            <p className="text-slate-500">A continuación, adjunta los documentos generados dinámicamente según tu configuración del PASO 1.</p>
-                        </div>
 
-                        {/* Agrupación de Documentos por Afinidad */}
-                        {(() => {
-                            const categoryDetails = {
-                                legal: { label: 'Antecedentes Legales Base', description: 'Estado actual de la propiedad en el CBR', icon: <ShieldCheck size={20} className="text-blue-600" /> },
-                                municipal: { label: 'Antecedentes Municipales y SII', description: 'Deudas fiscales, expropiaciones y regularización', icon: <Building size={20} className="text-slate-600" /> },
-                                titulos: { label: 'Títulos de Dominio (Escrituras)', description: 'Antecedentes de la cadena de títulos (10 años)', icon: <Scroll size={20} className="text-amber-600" /> },
-                                especial: { label: 'Documentación Técnica y Especial', description: 'Reglamentos, planos y otros antecedentes', icon: <Map size={20} className="text-emerald-600" /> }
-                            };
+                            <div className="mt-8 border-t border-slate-100 pt-6">
+                                <label className="block text-sm font-semibold text-slate-800 mb-4 tracking-tight">
+                                    Sobre la Historia de la Propiedad (Inscripciones)
+                                </label>
 
-                            const categoriesOrder = ['legal', 'municipal', 'titulos', 'especial'];
-                            const grouped = requiredDocs.reduce((acc, doc) => {
-                                const cat = doc.category || 'especial';
-                                if (!acc[cat]) acc[cat] = [];
-                                acc[cat].push(doc);
-                                return acc;
-                            }, {});
-
-                            return categoriesOrder.map(catKey => {
-                                const docsInCat = grouped[catKey];
-                                if (!docsInCat || docsInCat.length === 0) return null;
-
-                                const catInfo = categoryDetails[catKey];
-
-                                return (
-                                    <section key={catKey} className="space-y-4">
-                                        <div className="flex items-center gap-3 border-b border-slate-100 pb-3 mb-6">
-                                            <div className="p-2 bg-slate-50 rounded-lg">
-                                                {catInfo.icon}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-slate-800 text-lg uppercase tracking-tight">{catInfo.label}</h3>
-                                                <p className="text-slate-500 text-sm">{catInfo.description}</p>
-                                            </div>
+                                <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl mb-6">
+                                    <div className="flex items-start gap-3">
+                                        <div className="bg-blue-100 text-blue-600 p-2 rounded-lg"><Clock size={18} /></div>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium text-blue-900 mb-1">Periodo de Análisis: 10 Años</p>
+                                            <p className="text-xs text-blue-700 leading-relaxed">
+                                                Para este estudio analizaremos las inscripciones de dominio y gravámenes ocurridas en la última década.
+                                                Esto determinará la base de los antecedentes que solicitaremos a continuación.
+                                            </p>
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {docsInCat.map(doc => (
-                                                <SmartUploadCard
-                                                    key={doc.id}
-                                                    doc={doc}
-                                                    status={docStates[doc.id]?.status || 'pending'}
-                                                    error={docStates[doc.id]?.error}
-                                                    onUpload={handleUpload}
-                                                />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-3">
+                                            ¿Cuántas inscripciones ha tenido la propiedad en los últimos 10 años? (Aproximado)
+                                        </label>
+                                        <div className="flex flex-wrap gap-3">
+                                            {[1, 2, 3, 4, 5, '6 o más'].map((num) => (
+                                                <button
+                                                    key={num}
+                                                    onClick={() => setTransactionsCount(num)}
+                                                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${transactionsCount === num
+                                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-200 border-blue-600'
+                                                        : 'bg-white text-slate-600 border border-slate-200 hover:border-blue-300 hover:text-blue-600'
+                                                        }`}
+                                                >
+                                                    {num} {num === 1 ? 'Inscripción' : 'Inscripciones'}
+                                                </button>
                                             ))}
                                         </div>
-                                    </section>
-                                );
-                            });
-                        })()}
-
-
-                        {/* Visualización de Fase 3 (Solicitudes por Persona) */}
-                        {stage3Requests.length > 0 && (
-                            <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 mt-12 pt-12 border-t-2 border-dashed border-blue-200">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-                                        <FileCheck size={24} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-slate-800 text-xl tracking-tight">FASE 3: DOCUMENTOS POR PERSONA</h3>
-                                        <p className="text-slate-500 text-sm">Documentos específicos requeridos para personas identificadas en el estudio.</p>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 gap-4">
-                                    {stage3Requests.map(req => {
-                                        const key = `s3_${req.id}`;
-                                        const state = docStates[key];
+                            </div>
 
-                                        return (
-                                            <div key={key} className={`border rounded-xl p-5 transition-all duration-200 ${state?.status === 'uploaded' ? 'border-green-400 bg-green-50/30' : 'border-blue-200 bg-white hover:border-blue-300'}`}>
-                                                <div className="flex items-start gap-4">
-                                                    <div className={`p-3 rounded-lg ${state?.status === 'uploaded' ? 'bg-green-100 text-green-700' : 'bg-blue-50 text-blue-600'}`}>
-                                                        <FileText size={24} />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <div>
-                                                                <h4 className="font-bold text-slate-900 text-lg">{state?.label || req.tipo_documento}</h4>
-                                                                <div className="flex items-center gap-2 mt-1">
-                                                                    <span className="text-sm font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
-                                                                        {state?.personaNom || req.nombre_persona}
-                                                                    </span>
-                                                                    {Number(state?.personaRut || req.rut_persona) !== 0 && (
-                                                                        <span className="text-xs text-slate-400">
-                                                                            RUT: {state?.personaRut || req.rut_persona}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
-                                                                {state?.status === 'uploaded' ? (
-                                                                    <div className="flex items-center gap-1 text-green-600 font-bold text-sm">
-                                                                        <CheckCircle size={18} />
-                                                                        Listo
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="text-amber-500 font-bold text-sm flex items-center gap-1">
-                                                                        <Clock size={18} />
-                                                                        Pendiente
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
+                            <button
+                                onClick={async () => {
+                                    if (!propertyName || !propertyType || !studyPurpose) {
+                                        toast.error('Por favor completa todos los campos requeridos');
+                                        return;
+                                    }
+                                    const success = await saveFormData();
+                                    if (success) setCurrentStep(2);
+                                }}
+                                className="w-full mt-10 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg shadow-xl shadow-blue-200 flex items-center justify-center gap-2 transition-all transform active:scale-95 group"
+                            >
+                                Continuar a Documentación
+                                <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+                            </button>
+                        </div>
+                    </div>
+                ) : currentStep === 2 ? (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                        {/* Paso 2: Documentación */}
+                        <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl mb-6 flex items-start gap-3">
+                            <AlertCircle className="text-amber-500 mt-0.5 shrink-0" size={18} />
+                            <p className="text-sm text-amber-800 leading-relaxed">
+                                <strong>Momento 1: Inscripciones y Gravámenes Base.</strong> Sube el Dominio Vigente y el GP para que nuestro sistema pueda identificar los títulos y escrituras requeridas en el siguiente paso.
+                            </p>
+                        </div>
 
-                                                        {state?.status !== 'uploaded' && (
-                                                            <label className="mt-4 flex items-center gap-2 text-xs text-blue-600 font-bold cursor-pointer hover:bg-blue-50 w-fit px-3 py-2 rounded-lg border border-blue-200 transition-colors">
-                                                                <Upload size={14} />
-                                                                <span>SUBIR {state?.label?.toUpperCase() || req.tipo_documento?.toUpperCase()}</span>
-                                                                <input
-                                                                    type="file"
-                                                                    className="hidden"
-                                                                    accept=".pdf,.png,.jpg,.jpeg"
-                                                                    onChange={(e) => {
-                                                                        if (e.target.files && e.target.files[0]) {
-                                                                            handleUpload(key, e.target.files[0]);
-                                                                        }
-                                                                    }}
-                                                                />
-                                                            </label>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </section>
-                        )}
+                        <div className="grid grid-cols-1 gap-6 mb-12">
+                            {requiredDocs.map(doc => (
+                                <SmartUploadCard
+                                    key={doc.id}
+                                    doc={doc}
+                                    status={docStates[doc.id]?.status || 'pending'}
+                                    error={docStates[doc.id]?.error}
+                                    onUpload={handleUpload}
+                                />
+                            ))}
+                        </div>
 
                         {/* Footer de Acciones en Fase 2 */}
                         <div className="sticky bottom-4 left-0 right-0 bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200 shadow-2xl flex justify-between items-center z-50 mt-12">
                             <button
-                                onClick={() => {
-                                    setCurrentStep(1);
-                                    window.scrollTo(0, 0);
-                                }}
-                                className="text-slate-600 font-bold hover:text-slate-900 transition-colors flex items-center gap-2 px-4 py-2 hover:bg-slate-100 rounded-lg"
+                                onClick={handleSubmit}
+                                disabled={isSubmitting || Object.values(docStates).filter(s => s.status === 'uploaded').length === 0}
+                                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all ${isDocsSaved
+                                    ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-orange-100'
+                                    : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-100'
+                                    } disabled:opacity-50 shadow-lg`}
                             >
-                                <ArrowLeft size={18} /> Volver a Configuración
+                                {isSubmitting ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        Guardando...
+                                    </div>
+                                ) : isDocsSaved ? (
+                                    <>Enviar a Revisión <Send size={18} /></>
+                                ) : (
+                                    <>Guardar Documentos <FileCheck size={18} /></>
+                                )}
                             </button>
 
-                            <div className="flex items-center gap-4">
-                                <div className="hidden md:block text-right">
-                                    <p className="text-xs text-slate-400 font-medium uppercase">Progreso actual</p>
-                                    <p className="text-sm font-bold text-slate-700">{requiredDocs.length > 0 ? Math.round((requiredDocs.filter(d => docStates[d.id]?.status === 'uploaded').length / requiredDocs.length) * 100) : 0}% Completado</p>
-                                </div>
+                            {isDocsSaved && (
                                 <button
-                                    onClick={handleSubmit}
-                                    disabled={isSubmitting}
-                                    className="bg-blue-900 text-white px-10 py-4 rounded-xl font-bold hover:bg-blue-950 transition-all shadow-lg flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed group"
+                                    onClick={handleSendToReview}
+                                    className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all animate-bounce-subtle"
                                 >
-                                    {isSubmitting ? (
-                                        <>Cargando...</>
-                                    ) : (
-                                        <>
-                                            Enviar Estudio Completo
-                                            <CheckCircle size={20} className="group-hover:scale-110 transition-transform" />
-                                        </>
-                                    )}
+                                    ¡Listo! Enviar para Análisis
                                 </button>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-500 text-center py-12">
+                        {/* Paso 3: Análisis y Revisión */}
+                        <div className="bg-white p-10 rounded-3xl shadow-xl border border-slate-100 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-2 bg-blue-600"></div>
+                            <div className="inline-flex items-center justify-center p-4 bg-blue-50 text-blue-600 rounded-2xl mb-8">
+                                <ShieldCheck size={48} className="animate-pulse" />
                             </div>
+                            <h2 className="text-3xl font-bold text-slate-900 mb-4">Estudio en Revisión</h2>
+                            <p className="text-slate-500 text-lg leading-relaxed mb-8">
+                                Tus documentos han sido enviados exitosamente. Actualmente nuestro sistema está procesando la información y solicitando antecedentes adicionales si es necesario.
+                            </p>
+
+                            <div className="w-full space-y-4">
+                                {/* Estado Base */}
+                                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl text-left border border-slate-100">
+                                    <div className="bg-green-100 text-green-600 p-1.5 rounded-full"><CheckCircle size={14} /></div>
+                                    <span className="text-sm font-medium text-slate-700">Documentos base recibidos</span>
+                                </div>
+
+                                <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl text-left border border-blue-100">
+                                    <div className="bg-blue-600 text-white p-1.5 rounded-full"><div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></div></div>
+                                    <span className="text-sm font-bold text-blue-700">Analizando cadena de títulos e inscripciones...</span>
+                                </div>
+
+                                {/* Solicitudes Dinámicas del Backend */}
+                                {stage3Requests.length > 0 && (
+                                    <div className="mt-8 pt-6 border-t border-slate-100 w-full text-left space-y-8">
+
+                                        {/* SECCIÓN 2: Títulos y Gravámenes */}
+                                        {(() => {
+                                            const propertyDocs = stage3Requests.filter(req =>
+                                                ['titulos', 'legal', 'escritura_cv', 'inscripcion_anterior', 'posesion_efectiva', 'hipoteca', 'gp'].includes(req.tipo_documento?.toLowerCase()) ||
+                                                req.origen_solicitud === 'propiedad'
+                                            );
+                                            if (propertyDocs.length === 0) return null;
+                                            return (
+                                                <div className="animate-in fade-in slide-in-from-bottom-2">
+                                                    <h3 className="text-sm font-bold text-blue-800 uppercase mb-4 tracking-wider flex items-center gap-2">
+                                                        <Scroll size={16} />
+                                                        MOMENTO 2: Títulos y Gravámenes Extraídos
+                                                    </h3>
+                                                    <div className="space-y-3">
+                                                        {propertyDocs.map(req => renderRequestCard(req))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* SECCIÓN 3: Antecedentes Personales y Otros */}
+                                        {(() => {
+                                            const personalDocs = stage3Requests.filter(req =>
+                                                !['titulos', 'legal', 'escritura_cv', 'inscripcion_anterior', 'posesion_efectiva', 'hipoteca', 'gp'].includes(req.tipo_documento?.toLowerCase()) &&
+                                                req.origen_solicitud !== 'propiedad'
+                                            );
+                                            if (personalDocs.length === 0) return null;
+                                            return (
+                                                <div className="animate-in fade-in slide-in-from-bottom-2">
+                                                    <h3 className="text-sm font-bold text-amber-700 uppercase mb-4 tracking-wider flex items-center gap-2">
+                                                        <FileCheck size={16} />
+                                                        MOMENTO 3: Documentación Personal y Otros
+                                                    </h3>
+                                                    <div className="space-y-3">
+                                                        {personalDocs.map(req => renderRequestCard(req))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+
+                                    </div>
+                                )}
+
+                                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl text-left border border-slate-100 opacity-50">
+                                    <div className="bg-slate-200 text-slate-400 p-1.5 rounded-full"><Clock size={14} /></div>
+                                    <span className="text-sm font-medium text-slate-500">Generación de informe final</span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => navigate('/dashboard')}
+                                className="mt-12 text-blue-600 font-bold hover:text-blue-800 transition-colors flex items-center gap-2"
+                            >
+                                <ArrowLeft size={18} /> Volver al Dashboard
+                            </button>
                         </div>
                     </div>
                 )}
