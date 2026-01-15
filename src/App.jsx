@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Dashboard from './pages/Dashboard';
 import StudyPage from './pages/StudyPage';
+import RequestDocsPage from './pages/RequestDocsPage';
 
 // Components
 import PrivateRoute from './components/PrivateRoute';
@@ -68,6 +69,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <StudyPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/requests"
+        element={
+          <PrivateRoute>
+            <RequestDocsPage />
           </PrivateRoute>
         }
       />

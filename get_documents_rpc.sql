@@ -28,16 +28,27 @@ DECLARE
   ];
   v_t text;
   v_rows jsonb;
+  v_query text;
 BEGIN
   FOREACH v_t IN ARRAY v_tables LOOP
     -- Check if table exists to avoid errors if some don't exist yet
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = v_t) THEN
-        EXECUTE format('SELECT jsonb_agg(jsonb_build_object(''table'', %L, ''id'', id, ''url'', document_url)) FROM %I WHERE numero_operacion = %L', v_t, v_t, p_numero_operacion)
-        INTO v_rows;
-        
-        IF v_rows IS NOT NULL THEN
-        v_results := v_results || v_rows;
-        END IF;
+        -- Standardized query using operacion_id and documento_url
+        v_query := format('
+            SELECT jsonb_agg(jsonb_build_object(''table'', %L, ''id'', id, ''url'', documento_url)) 
+            FROM %I 
+            WHERE operacion_id = %L AND documento_url IS NOT NULL', 
+            v_t, v_t, p_numero_operacion);
+            
+        BEGIN
+            EXECUTE v_query INTO v_rows;
+            IF v_rows IS NOT NULL THEN
+                v_results := v_results || v_rows;
+            END IF;
+        EXCEPTION WHEN OTHERS THEN
+            -- Log error and continue with other tables
+            RAISE NOTICE 'Error querying table %: %', v_t, SQLERRM;
+        END;
     END IF;
   END LOOP;
 

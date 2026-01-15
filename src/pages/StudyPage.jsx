@@ -17,7 +17,8 @@ import {
     ArrowLeft,
     Scroll,
     Map,
-    LogOut
+    LogOut,
+    User
 } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { supabase } from '../lib/supabase';
@@ -55,7 +56,7 @@ const TRANSACTION_TITLES = [
 
 const DOCTYPE_TABLE_MAP = {
     'dominio_vigente': 'ocr_dominio_vigente',
-    'gp_30_anos': 'ocr_gp_30_anos',
+    'gp_30_anos': 'ocr_gp',
     'escritura_cv': 'ocr_escritura_cv',
     'deuda_contribuciones': 'ocr_deuda_contribuciones',
     'avaluo_fiscal': 'ocr_avaluo_fiscal',
@@ -79,13 +80,16 @@ const DOCTYPE_TABLE_MAP = {
 
 // --- Components ---
 
-const StatusPanel = ({ currentStep, progress, total }) => {
+const StatusPanel = ({ currentStep, progress, total, stage3Requests = [] }) => {
     const percentage = currentStep === 1 ? 0 : Math.round((progress / total) * 100);
+
+    // Check if there are active pending requests from admin
+    const hasPendingS3 = stage3Requests.some(r => r.estado !== 'Completado');
 
     const steps = [
         { label: 'Configuración', status: currentStep === 1 ? 'current' : 'completed' },
         { label: 'Documentación', status: currentStep === 2 ? 'current' : (currentStep > 2 ? 'completed' : 'pending') },
-        { label: 'Revisión', status: currentStep === 3 ? 'current' : (currentStep > 3 ? 'completed' : 'pending') },
+        { label: hasPendingS3 ? 'Doc. Adicional' : 'Revisión', status: currentStep === 3 ? 'current' : (currentStep > 3 ? 'completed' : 'pending') },
         { label: 'Informe', status: 'pending' }
     ];
 
@@ -139,21 +143,17 @@ const SmartUploadCard = ({ doc, status, error, onUpload }) => {
 
     const handleDragOver = (e) => {
         e.preventDefault();
-        setIsHovering(true);
+        if (status !== 'uploading' && status !== 'approved') setIsHovering(true);
     };
 
-    const handleDragLeave = () => {
-        setIsHovering(false);
-    };
+    const handleDragLeave = () => setIsHovering(false);
 
     const handleDrop = (e) => {
         e.preventDefault();
         setIsHovering(false);
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            if (status !== 'uploading' && status !== 'approved') {
-                onUpload(doc.id, e.dataTransfer.files[0]);
-            }
-        }
+        if (status === 'uploading' || status === 'approved') return;
+        const file = e.dataTransfer.files?.[0];
+        if (file) onUpload(doc.id, file);
     };
 
     const handleClick = () => {
@@ -168,24 +168,27 @@ const SmartUploadCard = ({ doc, status, error, onUpload }) => {
         }
     };
 
-    const getStatusStyles = () => {
-        switch (status) {
-            case 'uploaded': return 'border-green-500 bg-green-50/50';
-            case 'error': return 'border-red-300 bg-red-50/50';
-            case 'uploading': return 'border-blue-300 bg-blue-50/50';
-            default: return isHovering ? 'border-blue-400 bg-blue-50/30' : 'border-slate-200 hover:border-slate-300 bg-white';
-        }
-    };
-
-    const Icon = doc.icon;
+    const isUploaded = status === 'uploaded';
+    const isLoading = status === 'uploading';
+    const isError = status === 'error';
 
     return (
         <div
-            className={`border rounded-lg p-5 transition-all duration-200 relative group ${getStatusStyles()} ${status === 'pending' || status === 'error' ? 'cursor-pointer border-dashed' : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={handleClick}
+            className={`
+                group relative p-6 rounded-2xl border-2 transition-all duration-300
+                ${isUploaded
+                    ? 'bg-green-50/50 border-green-200 shadow-sm'
+                    : isError
+                        ? 'bg-red-50/50 border-red-200 shadow-sm'
+                        : isHovering
+                            ? 'bg-blue-50 border-blue-400 shadow-md scale-[1.01]'
+                            : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-lg cursor-pointer border-dashed'
+                }
+            `}
         >
             <input
                 type="file"
@@ -196,43 +199,176 @@ const SmartUploadCard = ({ doc, status, error, onUpload }) => {
             />
 
             <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-lg ${status === 'uploaded' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-                    <Icon size={24} />
+                <div className={`
+                    p-3 rounded-xl transition-colors
+                    ${isUploaded ? 'bg-green-100 text-green-700' : isError ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500 group-hover:bg-blue-50'}
+                `}>
+                    <doc.icon size={24} />
                 </div>
 
                 <div className="flex-1">
                     <div className="flex justify-between items-start">
-                        <h3 className="font-semibold text-slate-800">{doc.label}</h3>
-                        {status === 'uploaded' && <CheckCircle className="text-green-500" size={20} />}
-                        {status === 'error' && <XCircle className="text-red-500" size={20} />}
-                        {status === 'uploading' && <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>}
-                        {status === 'pending' && <div className="h-5 w-5 rounded-full border-2 border-slate-200"></div>}
+                        <h3 className="font-bold text-slate-800 text-lg leading-tight">{doc.label}</h3>
+                        <div className="flex items-center gap-2">
+                            {isUploaded && <CheckCircle className="text-green-500" size={20} />}
+                            {isError && <XCircle className="text-red-500" size={20} />}
+                            {isLoading && <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>}
+                            {!isUploaded && !isError && !isLoading && (
+                                <div className={`p-2 rounded-full transition-colors ${isHovering ? 'bg-blue-600 text-white' : 'text-slate-300'}`}>
+                                    <Upload size={18} />
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    <p className="text-sm text-slate-500 mt-1">{doc.description}</p>
+                    <p className="text-sm text-slate-500 mt-1 leading-relaxed">{doc.description}</p>
 
-                    {doc.alert && status !== 'uploaded' && (
-                        <div className="mt-2 text-xs font-medium px-2 py-1 bg-amber-100 text-amber-700 rounded-md inline-flex items-center gap-1">
+                    {doc.alert && !isUploaded && (
+                        <div className="mt-3 text-[11px] font-bold px-2 py-1 bg-amber-50 text-amber-700 rounded border border-amber-100 inline-flex items-center gap-1.5 uppercase tracking-wide">
                             <AlertCircle size={12} />
                             {doc.alert}
                         </div>
                     )}
 
-                    {status === 'error' && (
-                        <div className="mt-3 text-sm text-red-600 bg-red-50 p-2 rounded border border-red-100 flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
+                    {isError && (
+                        <div className="mt-3 text-sm text-red-600 bg-red-100/30 p-2 rounded-lg border border-red-100 flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
                             <AlertCircle size={16} className="mt-0.5 shrink-0" />
-                            <span>{error || 'Error al subir documento'}</span>
+                            <span className="font-medium">{error || 'Error al subir documento'}</span>
                         </div>
                     )}
 
-                    {status === 'pending' && (
-                        <div className="mt-4 flex items-center gap-2 text-xs text-slate-400 font-medium group-hover:text-blue-600 transition-colors">
-                            <Upload size={14} />
-                            <span>Arrastra tu PDF aquí o haz clic para buscar</span>
-                        </div>
-                    )}
+                    <div className="mt-4 flex items-center gap-2 text-[10px] font-black tracking-widest uppercase transition-colors">
+                        {isUploaded ? (
+                            <span className="text-green-600">Documento Listo</span>
+                        ) : (
+                            <span className="text-slate-400 group-hover:text-blue-600">
+                                Arrastra o selecciona archivo
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
+        </div>
+    );
+};
+
+const Stage3UploadCard = ({ req, docState, onUpload, isSubmitting, onSubmit }) => {
+    const [isHovering, setIsHovering] = useState(false);
+    const fileInputRef = useRef(null);
+    const isUploaded = docState?.status === 'uploaded';
+    const key = `s3_${req.id}`;
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        if (!isUploaded) setIsHovering(true);
+    };
+
+    const handleDragLeave = () => setIsHovering(false);
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsHovering(false);
+        if (isUploaded) return;
+        const file = e.dataTransfer.files?.[0];
+        if (file) onUpload(key, file);
+    };
+
+    const handleClick = () => {
+        if (!isUploaded) fileInputRef.current?.click();
+    };
+
+    return (
+        <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={handleClick}
+            className={`
+                group relative p-6 rounded-2xl border-2 transition-all duration-300
+                ${isUploaded
+                    ? 'bg-green-50/50 border-green-200 shadow-sm'
+                    : isHovering
+                        ? 'bg-blue-50 border-blue-400 shadow-md scale-[1.01]'
+                        : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-lg cursor-pointer border-dashed'
+                }
+            `}
+        >
+            <input
+                type="file"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={(e) => e.target.files?.[0] && onUpload(key, e.target.files[0])}
+                accept=".pdf,.png,.jpg,.jpeg"
+            />
+
+            <div className="flex items-start gap-4">
+                <div className={`
+                    p-3 rounded-xl transition-colors
+                    ${isUploaded ? 'bg-green-100 text-green-600' : 'bg-blue-50 text-blue-600 group-hover:bg-blue-100'}
+                `}>
+                    {['titulos', 'legal', 'escritura_cv', 'inscripcion_anterior', 'posesion_efectiva', 'hipoteca', 'gp'].includes(req.tipo_documento?.toLowerCase())
+                        ? <Scroll size={24} />
+                        : <FileCheck size={24} />
+                    }
+                </div>
+
+                <div className="flex-1">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h3 className="font-bold text-slate-900 text-lg leading-tight">
+                                {req.nombre_documento || req.tipo_documento}
+                            </h3>
+
+                            {(req.propiedad_fojas || req.propiedad_numero || req.propiedad_anio || req.propiedad_comuna) && (
+                                <p className="text-xs font-bold text-blue-700 mt-1.5 uppercase tracking-wide bg-blue-50 inline-block px-2 py-0.5 rounded">
+                                    {req.propiedad_fojas && `Fojas: ${req.propiedad_fojas} `}
+                                    {req.propiedad_numero && `Nº: ${req.propiedad_numero} `}
+                                    {req.propiedad_anio && `Año: ${req.propiedad_anio} `}
+                                    {req.propiedad_comuna && ` | ${req.propiedad_comuna}`}
+                                </p>
+                            )}
+                        </div>
+
+                        {isUploaded ? (
+                            <div className="bg-green-500 text-white p-1 rounded-full">
+                                <CheckCircle size={20} />
+                            </div>
+                        ) : (
+                            <div className={`p-2 rounded-full transition-colors ${isHovering ? 'bg-blue-600 text-white' : 'text-slate-300'}`}>
+                                <Upload size={20} />
+                            </div>
+                        )}
+                    </div>
+
+                    {req.detalle && (
+                        <p className="text-sm text-slate-500 mt-2 italic border-l-2 border-slate-200 pl-3">
+                            {req.detalle}
+                        </p>
+                    )}
+
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
+                        {(req.nombre_persona || req.rut_persona) ? (
+                            <div className="flex items-center gap-2">
+                                <div className="bg-slate-100 text-slate-500 p-1 rounded-md">
+                                    <User size={14} />
+                                </div>
+                                <span className="text-xs font-semibold text-slate-600">
+                                    {req.nombre_persona} {req.rut_persona ? `(RUT: ${req.rut_persona})` : ''}
+                                </span>
+                            </div>
+                        ) : <div />}
+
+                        {isUploaded ? (
+                            <span className="text-[10px] font-black text-green-600 tracking-widest uppercase">Documento Listo</span>
+                        ) : (
+                            <span className="text-[10px] font-bold text-slate-400 group-hover:text-blue-600 transition-colors uppercase tracking-widest">
+                                Arrastra o selecciona archivo
+                            </span>
+                        )}
+                    </div>
+                </div>
+            </div>
+
         </div>
     );
 };
@@ -272,14 +408,32 @@ export default function StudyPage() {
 
     useEffect(() => {
         const fetchStages = async () => {
-            // Fase 2 is now handled differently or logic is being restructured
-            // For now, we fetch Phase 3 specific requests
+            // 1. Fetch Study Status to determine step
+            const { data: studyData } = await supabase
+                .from('estudios_titulos')
+                .select('estado, nombre_propiedad, tipo_propiedad, finalidad_estudio, cantidad_transacciones')
+                .eq('numero_operacion', operationId)
+                .single();
+
+            if (studyData) {
+                setPropertyName(studyData.nombre_propiedad || '');
+                setPropertyType(studyData.tipo_propiedad || '');
+                setStudyPurpose(studyData.finalidad_estudio || '');
+                setTransactionsCount(studyData.cantidad_transacciones || 1);
+
+                // Logic: If explicitly in 'En Revisión' or 'Observaciones', go to Step 3
+                if (['En Revisión', 'Observaciones'].includes(studyData.estado)) {
+                    setCurrentStep(3);
+                }
+            }
+
+            // 2. Fetch Phase 3 specific requests (solicitud_documentos)
             const { data: s3Data } = await supabase
                 .from('solicitud_documentos')
                 .select('*')
                 .eq('operacion_id', operationId);
 
-            if (s3Data) {
+            if (s3Data && s3Data.length > 0) {
                 setStage3Requests(s3Data);
                 setDocStates(prev => {
                     const next = { ...prev };
@@ -293,6 +447,7 @@ export default function StudyPage() {
                                 stage: 3,
                                 dbId: req.id,
                                 label: req.nombre_documento,
+                                dbType: req.tipo_documento,
                                 personaNom: req.nombre_persona,
                                 personaRut: req.rut_persona,
                                 description: `Documento para ${req.nombre_persona}`,
@@ -301,6 +456,10 @@ export default function StudyPage() {
                     });
                     return next;
                 });
+
+                // Force step 3 if we have dynamic requests, regardless of status (fallback)
+                // This complies with user request: "if identified in solicitud_documentos pass to phase 3"
+                setCurrentStep(3);
             }
         };
         fetchStages();
@@ -328,12 +487,16 @@ export default function StudyPage() {
                             stage: 3,
                             dbId: newReq.id,
                             label: newReq.nombre_documento,
+                            dbType: newReq.tipo_documento,
                             personaNom: newReq.nombre_persona,
                             personaRut: newReq.rut_persona,
                             description: `Documento para ${newReq.nombre_persona}`,
                         }
                     }));
                     toast.info(`Nueva solicitud documento: ${newReq.nombre_documento} para ${newReq.nombre_persona}`, { duration: 5000 });
+
+                    // Auto-advance to Step 3 if a new request comes in
+                    setCurrentStep(prev => prev < 3 ? 3 : prev);
                 }
             )
             .subscribe();
@@ -351,6 +514,7 @@ export default function StudyPage() {
             ...prev,
             [docId]: { ...prev[docId], status: 'uploaded', error: null, file: file }
         }));
+        setIsDocsSaved(false);
         toast.success(`Documento "${file.name}" preparado`);
     };
 
@@ -435,12 +599,16 @@ export default function StudyPage() {
 
                 // Use consistent naming strategy
                 let fileName = `${operationId}_${key}.${extension}`;
-                // Special case for 'compraventa' to ensure consistent triggers if needed
-                if (key === 'compraventa') {
-                    fileName = `${operationId}/${operationId}_compraventa.${extension}`;
-                } else {
-                    fileName = `${operationId}/${fileName}`;
+
+                // If it's stage 3, we use a cleaner name based on the request label if available
+                if (state.stage === 3 && state.label) {
+                    const cleanLabel = state.label.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                    fileName = `${cleanLabel}_${operationId}.${extension}`;
+                } else if (key === 'compraventa') {
+                    fileName = `${operationId}_compraventa.${extension}`;
                 }
+
+                fileName = `${operationId}/${fileName}`;
                 const filePath = fileName;
 
                 const { error: storageError } = await supabase.storage
@@ -454,10 +622,12 @@ export default function StudyPage() {
                     .getPublicUrl(filePath);
 
                 // --- NEW LOGIC: Insert into specific OCR table ---
-                // Handle dynamic keys (e.g., inscripcion_anterior_1 -> inscripcion_anterior)
+                // Handle dynamic keys or get from solicitud_documentos type
                 let mapKey = key;
                 if (key.startsWith('inscripcion_anterior_')) {
                     mapKey = 'inscripcion_anterior';
+                } else if (state.stage === 3 && state.dbType) {
+                    mapKey = state.dbType;
                 }
 
                 const targetTable = DOCTYPE_TABLE_MAP[mapKey];
@@ -495,7 +665,7 @@ export default function StudyPage() {
 
             await Promise.all(updates);
 
-            if (currentStep === 2) {
+            if (currentStep === 2 || currentStep === 3) {
                 setIsDocsSaved(true);
                 toast.success('Documentos guardados correctamente. Ahora puedes enviar a revisión.', { id: toastId });
             } else {
@@ -546,6 +716,13 @@ export default function StudyPage() {
             }
 
             console.log("Send to review successful:", result);
+
+            // 4. Update study status in database
+            await supabase
+                .from('estudios_titulos')
+                .update({ estado: 'En Revisión' })
+                .eq('numero_operacion', operationId);
+
             setCurrentStep(3);
             toast.success('Estudio enviado a revisión correctamente', { id: toastId });
 
@@ -595,57 +772,6 @@ export default function StudyPage() {
         navigate('/login');
     };
 
-    const renderRequestCard = (req) => {
-        const key = `s3_${req.id}`;
-        const state = docStates[key];
-        const isUploaded = state?.status === 'uploaded';
-
-        return (
-            <div key={key} className={`p-4 rounded-xl border transition-all ${isUploaded ? 'bg-green-50 border-green-200' : 'bg-white border-blue-100 shadow-sm'}`}>
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${isUploaded ? 'bg-green-100 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
-                            {['titulos', 'legal', 'escritura_cv', 'inscripcion_anterior', 'posesion_efectiva', 'hipoteca', 'gp'].includes(req.tipo_documento?.toLowerCase()) ? <Scroll size={18} /> : <FileCheck size={18} />}
-                        </div>
-                        <div>
-                            <p className="font-bold text-slate-900 leading-tight">{req.nombre_documento || req.tipo_documento}</p>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                {req.nombre_persona} {req.rut_persona ? `(RUT: ${req.rut_persona})` : ''}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        {isUploaded ? (
-                            <div className="flex items-center gap-1 text-green-600 text-xs font-bold bg-green-100 px-2 py-1 rounded">
-                                <CheckCircle size={14} /> LISTO
-                            </div>
-                        ) : (
-                            <label className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer hover:bg-blue-700 transition-colors">
-                                <Upload size={12} /> SUBIR
-                                <input
-                                    type="file"
-                                    className="hidden"
-                                    accept=".pdf,.png,.jpg,.jpeg"
-                                    onChange={(e) => {
-                                        if (e.target.files?.[0]) handleUpload(key, e.target.files[0]);
-                                    }}
-                                />
-                            </label>
-                        )}
-                    </div>
-                </div>
-                {isUploaded && !isSubmitting && (
-                    <button
-                        onClick={handleSubmit}
-                        className="mt-3 w-full py-2 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600 flex items-center justify-center gap-2 transition-colors"
-                    >
-                        <Send size={14} /> Confirmar Envío al Analista
-                    </button>
-                )}
-            </div>
-        );
-    };
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
@@ -687,7 +813,9 @@ export default function StudyPage() {
                             {operacionId === 'nuevo' ? 'Nuevo Estudio de Títulos' : `Estudio #${operationId}`}
                         </h1>
                         <p className="text-slate-500">
-                            {currentStep === 1 ? 'Paso 1: Configuración de la propiedad' : currentStep === 2 ? 'Paso 2: Carga de documentos' : 'Paso 3: Revisión del estudio'}
+                            {currentStep === 1 ? 'Paso 1: Configuración de la propiedad' :
+                                currentStep === 2 ? 'Paso 2: Carga de documentos' :
+                                    stage3Requests.some(r => r.estado !== 'Completado') ? 'Paso 3: Carga de antecedentes adicionales' : 'Paso 3: Revisión del estudio'}
                         </p>
                     </div>
                     {currentStep === 2 && (
@@ -702,7 +830,12 @@ export default function StudyPage() {
                     )}
                 </div>
 
-                <StatusPanel currentStep={currentStep} progress={completedCount} total={totalDocs} />
+                <StatusPanel
+                    currentStep={currentStep}
+                    progress={completedCount}
+                    total={totalDocs}
+                    stage3Requests={stage3Requests}
+                />
 
                 {currentStep === 1 ? (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-500">
@@ -856,7 +989,7 @@ export default function StudyPage() {
                                     onClick={handleSendToReview}
                                     className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all animate-bounce-subtle"
                                 >
-                                    ¡Listo! Enviar para Análisis
+                                    Listo, Enviar para Análisis
                                 </button>
                             )}
                         </div>
@@ -866,13 +999,27 @@ export default function StudyPage() {
                         {/* Paso 3: Análisis y Revisión */}
                         <div className="bg-white p-10 rounded-3xl shadow-xl border border-slate-100 relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-2 bg-blue-600"></div>
-                            <div className="inline-flex items-center justify-center p-4 bg-blue-50 text-blue-600 rounded-2xl mb-8">
-                                <ShieldCheck size={48} className="animate-pulse" />
-                            </div>
-                            <h2 className="text-3xl font-bold text-slate-900 mb-4">Estudio en Revisión</h2>
-                            <p className="text-slate-500 text-lg leading-relaxed mb-8">
-                                Tus documentos han sido enviados exitosamente. Actualmente nuestro sistema está procesando la información y solicitando antecedentes adicionales si es necesario.
-                            </p>
+                            {stage3Requests.some(r => r.estado !== 'Completado') ? (
+                                <>
+                                    <div className="inline-flex items-center justify-center p-4 bg-orange-50 text-orange-600 rounded-2xl mb-8">
+                                        <FileText size={48} className="animate-pulse" />
+                                    </div>
+                                    <h2 className="text-3xl font-bold text-slate-900 mb-4">Acción Requerida: Antecedentes Adicionales</h2>
+                                    <p className="text-slate-500 text-lg leading-relaxed mb-8">
+                                        El analista ha revisado tu carpeta y necesita que adjuntes los siguientes documentos para continuar con el estudio de títulos.
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="inline-flex items-center justify-center p-4 bg-blue-50 text-blue-600 rounded-2xl mb-8">
+                                        <ShieldCheck size={48} className="animate-pulse" />
+                                    </div>
+                                    <h2 className="text-3xl font-bold text-slate-900 mb-4">Estudio en Revisión</h2>
+                                    <p className="text-slate-500 text-lg leading-relaxed mb-8">
+                                        Tus documentos han sido enviados exitosamente. Actualmente nuestro sistema está procesando la información y solicitando antecedentes adicionales si es necesario.
+                                    </p>
+                                </>
+                            )}
 
                             <div className="w-full space-y-4">
                                 {/* Estado Base */}
@@ -881,10 +1028,6 @@ export default function StudyPage() {
                                     <span className="text-sm font-medium text-slate-700">Documentos base recibidos</span>
                                 </div>
 
-                                <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl text-left border border-blue-100">
-                                    <div className="bg-blue-600 text-white p-1.5 rounded-full"><div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></div></div>
-                                    <span className="text-sm font-bold text-blue-700">Analizando cadena de títulos e inscripciones...</span>
-                                </div>
 
                                 {/* Solicitudes Dinámicas del Backend */}
                                 {stage3Requests.length > 0 && (
@@ -904,7 +1047,16 @@ export default function StudyPage() {
                                                         MOMENTO 2: Títulos y Gravámenes Extraídos
                                                     </h3>
                                                     <div className="space-y-3">
-                                                        {propertyDocs.map(req => renderRequestCard(req))}
+                                                        {propertyDocs.map(req => (
+                                                            <Stage3UploadCard
+                                                                key={`s3_${req.id}`}
+                                                                req={req}
+                                                                docState={docStates[`s3_${req.id}`]}
+                                                                onUpload={handleUpload}
+                                                                isSubmitting={isSubmitting}
+                                                                onSubmit={handleSubmit}
+                                                            />
+                                                        ))}
                                                     </div>
                                                 </div>
                                             );
@@ -924,12 +1076,54 @@ export default function StudyPage() {
                                                         MOMENTO 3: Documentación Personal y Otros
                                                     </h3>
                                                     <div className="space-y-3">
-                                                        {personalDocs.map(req => renderRequestCard(req))}
+                                                        {personalDocs.map(req => (
+                                                            <Stage3UploadCard
+                                                                key={`s3_${req.id}`}
+                                                                req={req}
+                                                                docState={docStates[`s3_${req.id}`]}
+                                                                onUpload={handleUpload}
+                                                                isSubmitting={isSubmitting}
+                                                                onSubmit={handleSubmit}
+                                                            />
+                                                        ))}
                                                     </div>
                                                 </div>
                                             );
                                         })()}
 
+                                    </div>
+                                )}
+
+                                {stage3Requests.length > 0 && stage3Requests.some(r => r.estado !== 'Completado') && (
+                                    <div className="sticky bottom-4 left-0 right-0 bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200 shadow-2xl flex justify-between items-center z-50 mt-12 gap-4">
+                                        <button
+                                            onClick={handleSubmit}
+                                            disabled={isSubmitting || isDocsSaved || !Object.entries(docStates).some(([k, s]) => k.startsWith('s3_') && s.status === 'uploaded' && s.file)}
+                                            className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all ${isDocsSaved
+                                                ? 'bg-green-50 text-green-700 border border-green-200'
+                                                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-100'
+                                                } disabled:opacity-50 shadow-lg transition-all`}
+                                        >
+                                            {isSubmitting ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                    Guardando...
+                                                </div>
+                                            ) : isDocsSaved ? (
+                                                <>Documentos Guardados <CheckCircle size={18} /></>
+                                            ) : (
+                                                <>Guardar Antecedentes <FileCheck size={18} /></>
+                                            )}
+                                        </button>
+
+                                        {isDocsSaved && (
+                                            <button
+                                                onClick={handleSendToReview}
+                                                className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all animate-bounce-subtle flex items-center gap-2"
+                                            >
+                                                Enviar a Revisión <Send size={18} />
+                                            </button>
+                                        )}
                                     </div>
                                 )}
 
