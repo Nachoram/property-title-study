@@ -105,7 +105,8 @@ const RequestDocsPage = () => {
             propiedad_anio: form.propiedad_anio,
             propiedad_comuna: form.propiedad_comuna,
             estado: 'Pendiente',
-            subido: false
+            subido: false,
+            fase: 3
         };
 
         const { data, error } = await supabase

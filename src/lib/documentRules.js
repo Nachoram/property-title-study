@@ -171,6 +171,13 @@ const DOC_CATALOG = {
         description: 'Activa o pasiva. Título constitutivo.',
         icon: Scroll,
         category: 'especial'
+    },
+    GASTO_COMUN: {
+        id: 'gasto_comun',
+        label: 'Certificado de Deuda Gasto Común',
+        description: 'Certificado emitido por la administración del condominio.',
+        icon: Building,
+        category: 'especial'
     }
 };
 
@@ -198,6 +205,11 @@ export function generateRequiredDocuments(formData) {
     if (needsBuildingDocs) {
         docs.push(DOC_CATALOG.NUMERO_MUNICIPAL);
         docs.push(DOC_CATALOG.RECEPCION_FINAL);
+    }
+
+    if (formData.hasReglamento) {
+        docs.push(DOC_CATALOG.REGLAMENTO_COPROPIEDAD);
+        docs.push(DOC_CATALOG.GASTO_COMUN);
     }
 
     // Dinámicos: Una solicitud de inscripción por cada unidad indicada (si es > 1)
