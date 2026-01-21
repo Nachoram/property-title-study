@@ -1,4 +1,6 @@
--- RPC Function to get all documents for an operation (Fixed to return 'enviado')
+-- Migration 034: Fix get_operation_documents to return 'enviado' field
+-- This fixes the bug where documents are re-sent because the frontend can't track their status.
+
 CREATE OR REPLACE FUNCTION public.get_operation_documents(p_numero_operacion text, p_fase integer DEFAULT NULL)
 RETURNS jsonb
 LANGUAGE plpgsql

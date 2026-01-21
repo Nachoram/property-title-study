@@ -704,11 +704,13 @@ export default function StudyPage() {
             for (const [key, state] of Object.entries(docStates)) {
                 if (state.status !== 'uploaded' || !state.file) continue;
 
-                // Only process documents from the current phase to avoid re-sending old ones
+                // MODIFIED: Process all documents regardless of phase
+                /*
                 if (state.stage !== currentStep) {
                     console.log(`Skipping doc ${key} because it belongs to phase ${state.stage} (current: ${currentStep})`);
                     continue;
                 }
+                */
                 console.log(`Processing file for ${key}: ${state.file.name}`);
                 const file = state.file;
                 const extension = file.name.split('.').pop();
@@ -774,8 +776,8 @@ export default function StudyPage() {
             // 1. Fetch all documents for the current phase via RPC
             const { data: documents, error } = await supabase
                 .rpc('get_operation_documents', {
-                    p_numero_operacion: operationId,
-                    p_fase: currentStep
+                    p_numero_operacion: operationId
+                    // p_fase: currentStep // MODIFIED: No phase filtering
                 });
 
             if (error) {
@@ -783,47 +785,41 @@ export default function StudyPage() {
                 throw new Error("Error al obtener los documentos guardados.");
             }
 
-            console.log(`RPC get_operation_documents returned ${documents.length} docs for phase ${currentStep}`);
-            if (!documents || documents.length === 0) {
+            console.log(`RPC get_operation_documents returned ${documents?.length || 0} docs total`);
+
+            // 2. Filter out already sent documents
+            const unsentDocs = (documents || []).filter(d => !d.enviado);
+
+            if (unsentDocs.length === 0) {
                 toast.error("No hay documentos nuevos para enviar.", { id: toastId });
                 return;
             }
 
-            // 2. Priority Sorting Logic
-            const priorityDocs = [...documents].sort((a, b) => {
+            // 3. Priority Sorting Logic
+            const priorityDocs = [...unsentDocs].sort((a, b) => {
                 const tableA = a.table?.toLowerCase() || '';
                 const tableB = b.table?.toLowerCase() || '';
                 const typeA = a.dbType?.toLowerCase() || '';
                 const typeB = b.dbType?.toLowerCase() || '';
 
-                if (currentStep === 2) {
-                    // Phase 2: 1. Dominio Vigente, 2. GP
-                    const getPrio = (t, ty) => {
-                        if (t.includes('dominio') || ty.includes('dominio')) return 1;
-                        if (t.includes('gp') || ty.includes('gp')) return 2;
-                        return 3;
-                    };
-                    return getPrio(tableA, typeA) - getPrio(tableB, typeB);
-                } else if (currentStep === 3) {
-                    // Phase 3: 1. Títulos
-                    const getPrio = (t, ty) => {
-                        const lowT = t.toLowerCase();
-                        const lowTy = ty?.toLowerCase() || '';
-                        if (lowT.includes('titulo') || lowTy.includes('titulo') || lowT.includes('herencia') || lowTy.includes('herencia')) return 1;
-                        return 2;
-                    };
-                    return getPrio(tableA, typeA) - getPrio(tableB, typeB);
-                } else if (currentStep === 4) {
-                    // Phase 4: Identity/Civil status
-                    const getPrio = (t, ty) => {
-                        const lowT = t.toLowerCase();
-                        if (lowT.includes('cedula') || lowT.includes('identidad')) return 1;
-                        if (lowT.includes('matrimonio') || lowT.includes('nacimiento')) return 2;
-                        return 3;
-                    };
-                    return getPrio(tableA, typeA) - getPrio(tableB, typeB);
-                }
-                return 0;
+                // Global Priority: 1. Base (Dominio/GP) -> 2. Titles -> 3. Identity
+                const getPrio = (t, ty) => {
+                    const lowT = t?.toLowerCase() || '';
+                    const lowTy = ty?.toLowerCase() || '';
+
+                    // Phase 2 / Base
+                    if (lowT.includes('dominio') || lowTy.includes('dominio')) return 1;
+                    if (lowT.includes('gp') || lowTy.includes('gp')) return 2;
+
+                    // Phase 3 / Titles
+                    if (lowT.includes('titulo') || lowTy.includes('titulo') || lowT.includes('herencia') || lowTy.includes('herencia')) return 3;
+
+                    // Phase 4 / Identity
+                    if (lowT.includes('cedula') || lowT.includes('identidad')) return 4;
+
+                    return 5;
+                };
+                return getPrio(tableA, typeA) - getPrio(tableB, typeB);
             });
 
             console.log(`Sending ${priorityDocs.length} documents sequentially...`);
@@ -856,6 +852,17 @@ export default function StudyPage() {
 
                 if (invokeError || !result?.success) {
                     throw new Error(`Error en doc ${i + 1}: ${result?.error || invokeError?.message}`);
+                }
+
+                // 4. Mark as sent in database
+                console.log(`Marking doc ${doc.id} from table ${doc.table} as sent...`);
+                const { error: updateError } = await supabase
+                    .from(doc.table)
+                    .update({ enviado: true })
+                    .eq('id', doc.id);
+
+                if (updateError) {
+                    console.warn("Failed to mark document as sent:", updateError);
                 }
 
                 // Wait 10 seconds before next one (if not the last)
@@ -1055,26 +1062,7 @@ export default function StudyPage() {
                                 </div>
 
                                 <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-3">
-                                            ¿Cuántas inscripciones ha tenido la propiedad en los últimos 10 años? (Aproximado)
-                                        </label>
-                                        <div className="relative">
-                                            <select
-                                                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg appearance-none bg-white focus:ring-2 focus:ring-blue-500 outline-none font-medium text-slate-700"
-                                                value={transactionsCount}
-                                                onChange={(e) => setTransactionsCount(parseInt(e.target.value))}
-                                            >
-                                                {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
-                                                    <option key={num} value={num}>
-                                                        {num} {num === 1 ? 'Inscripción' : 'Inscripciones'}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <Scroll className="absolute left-3 top-2.5 text-slate-400" size={18} />
-                                            <ChevronDown className="absolute right-3 top-2.5 text-slate-400 pointer-events-none" size={18} />
-                                        </div>
-                                    </div>
+                                    {/* MODIFIED: Section removed as per logic change (always 1 inscription) */}
                                 </div>
                             </div>
 
@@ -1094,34 +1082,120 @@ export default function StudyPage() {
                             </button>
                         </div>
                     </div>
-                ) : currentStep === 2 ? (
+                ) : (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                        {/* Paso 2: Documentación */}
+                        {/* Unified Document Management View */}
                         <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl mb-6 flex items-start gap-3">
                             <AlertCircle className="text-amber-500 mt-0.5 shrink-0" size={18} />
                             <p className="text-sm text-amber-800 leading-relaxed">
-                                <strong>Momento 1: Inscripciones y Gravámenes Base.</strong> Sube el Dominio Vigente y el GP para que nuestro sistema pueda identificar los títulos y escrituras requeridas en el siguiente paso.
+                                <strong>Gestión de Documentos.</strong> Sube los antecedentes solicitados. A medida que avancemos, podrían aparecer nuevos requerimientos del analista.
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-6 mb-12">
-                            {requiredDocs.map(doc => (
-                                <SmartUploadCard
-                                    key={doc.id}
-                                    doc={doc}
-                                    status={docStates[doc.id]?.status || 'pending'}
-                                    error={docStates[doc.id]?.error}
-                                    onUpload={handleUpload}
-                                    onSkip={handleSkipDocument}
-                                />
-                            ))}
+                        {/* SECTION 1: Base Docs (Phase 2 Origin) */}
+                        <div className="mb-12">
+                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <FileText size={16} /> Documentación Base
+                            </h3>
+                            <div className="grid grid-cols-1 gap-4">
+                                {requiredDocs.map(doc => (
+                                    <SmartUploadCard
+                                        key={doc.id}
+                                        doc={doc}
+                                        status={docStates[doc.id]?.status || 'pending'}
+                                        error={docStates[doc.id]?.error}
+                                        onUpload={handleUpload}
+                                        onSkip={handleSkipDocument}
+                                    />
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Footer de Acciones en Fase 2 */}
-                        <div className="sticky bottom-4 left-0 right-0 bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200 shadow-2xl flex justify-between items-center z-50 mt-12">
+                        {/* SECTION 2: Titles/Gravamens (Phase 3 Origin) */}
+                        {(() => {
+                            const propertyDocs = stage3Requests.filter(req =>
+                                ['titulos', 'legal', 'escritura_cv', 'inscripcion_anterior', 'posesion_efectiva', 'hipoteca', 'gp', 'inscripcion_herencia', 'herencia'].includes(req.tipo_documento?.toLowerCase()) ||
+                                req.origen_solicitud === 'propiedad'
+                            );
+                            if (propertyDocs.length === 0) return null;
+                            return (
+                                <div className="mb-12 animate-in fade-in slide-in-from-bottom-2">
+                                    <h3 className="text-sm font-bold text-blue-800 uppercase mb-4 tracking-wider flex items-center gap-2">
+                                        <Scroll size={16} /> Títulos y Gravámenes
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {propertyDocs.map(req => (
+                                            <Stage3UploadCard
+                                                key={`s3_${req.id}`}
+                                                docId={`s3_${req.id}`}
+                                                req={req}
+                                                docState={docStates[`s3_${req.id}`]}
+                                                onUpload={handleUpload}
+                                                isSubmitting={isSubmitting}
+                                                onSkip={handleSkipDocument}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {/* SECTION 3: Personal/Other (Phase 3 Origin) */}
+                        {(() => {
+                            const personalDocs = stage3Requests.filter(req =>
+                                !['titulos', 'legal', 'escritura_cv', 'inscripcion_anterior', 'posesion_efectiva', 'hipoteca', 'gp'].includes(req.tipo_documento?.toLowerCase()) &&
+                                req.origen_solicitud !== 'propiedad'
+                            );
+                            if (personalDocs.length === 0) return null;
+                            return (
+                                <div className="mb-12 animate-in fade-in slide-in-from-bottom-2">
+                                    <h3 className="text-sm font-bold text-amber-700 uppercase mb-4 tracking-wider flex items-center gap-2">
+                                        <FileCheck size={16} /> Documentación Personal y Otros
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {personalDocs.map(req => (
+                                            <Stage3UploadCard
+                                                key={`s3_${req.id}`}
+                                                docId={`s3_${req.id}`}
+                                                req={req}
+                                                docState={docStates[`s3_${req.id}`]}
+                                                onUpload={handleUpload}
+                                                isSubmitting={isSubmitting}
+                                                onSkip={handleSkipDocument}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {/* SECTION 4: Identity (Phase 4 Origin) */}
+                        {stage4Requests.length > 0 && (
+                            <div className="mb-12 animate-in fade-in slide-in-from-bottom-2">
+                                <h3 className="text-sm font-bold text-indigo-800 uppercase mb-4 tracking-wider flex items-center gap-2">
+                                    <User size={16} /> Antecedentes de los Comparecientes
+                                </h3>
+                                <div className="space-y-3">
+                                    {stage4Requests.map(req => (
+                                        <Stage3UploadCard
+                                            key={`s4_${req.id}`}
+                                            docId={`s4_${req.id}`}
+                                            req={req}
+                                            docState={docStates[`s4_${req.id}`]}
+                                            onUpload={handleUpload}
+                                            isSubmitting={isSubmitting}
+                                            onSkip={handleSkipDocument}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Footer Actions */}
+                        <div className="sticky bottom-4 left-0 right-0 bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200 shadow-2xl flex justify-between items-center z-50">
                             <button
                                 onClick={handleSubmit}
-                                disabled={isSubmitting || isDocsSaved || Object.values(docStates).filter(s => s.status === 'uploaded' || s.status === 'skipped').length === 0}
+                                disabled={isSubmitting || isDocsSaved || Object.values(docStates).filter(s => (s.status === 'uploaded' || s.status === 'skipped')).length === 0}
                                 className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all ${isDocsSaved
                                     ? 'bg-green-50 text-green-600 border border-green-200'
                                     : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-100'
@@ -1142,267 +1216,11 @@ export default function StudyPage() {
                             {isDocsSaved && (
                                 <button
                                     onClick={handleSendToReview}
-                                    className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all animate-bounce-subtle"
+                                    className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all animate-bounce-subtle flex items-center gap-2"
                                 >
-                                    Listo, Enviar para Análisis
+                                    Enviar a Revisión <Send size={18} />
                                 </button>
                             )}
-                        </div>
-                    </div>
-                ) : currentStep === 3 ? (
-                    <div className="animate-in fade-in slide-in-from-right-4 duration-500 text-center py-12">
-                        {/* Paso 3: Análisis y Revisión */}
-                        <div className="bg-white p-10 rounded-3xl shadow-xl border border-slate-100 relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-2 bg-blue-600"></div>
-                            {stage3Requests.some(r => r.estado !== 'Completado') ? (
-                                <>
-                                    <div className="inline-flex items-center justify-center p-4 bg-orange-50 text-orange-600 rounded-2xl mb-8">
-                                        <FileText size={48} className="animate-pulse" />
-                                    </div>
-                                    <h2 className="text-3xl font-bold text-slate-900 mb-4">Acción Requerida: Títulos de Propiedad</h2>
-                                    <p className="text-slate-500 text-lg leading-relaxed mb-8">
-                                        El analista ha revisado tu carpeta y necesita que adjuntes las copias de escrituras o inscripciones para reconstruir la historia de 10 años.
-                                    </p>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="inline-flex items-center justify-center p-4 bg-blue-50 text-blue-600 rounded-2xl mb-8">
-                                        <ShieldCheck size={48} className="animate-pulse" />
-                                    </div>
-                                    <h2 className="text-3xl font-bold text-slate-900 mb-4">Estudio en Revisión de Títulos</h2>
-                                    <p className="text-slate-500 text-lg leading-relaxed mb-8">
-                                        Tus documentos han sido enviados exitosamente. Actualmente nuestro sistema está procesando la información y solicitando antecedentes de los títulos si es necesario.
-                                    </p>
-                                </>
-                            )}
-
-                            <div className="w-full space-y-4">
-                                {/* Estado Base */}
-                                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl text-left border border-slate-100">
-                                    <div className="bg-green-100 text-green-600 p-1.5 rounded-full"><CheckCircle size={14} /></div>
-                                    <span className="text-sm font-medium text-slate-700">Documentos base recibidos</span>
-                                </div>
-
-
-                                {/* Solicitudes Dinámicas del Backend */}
-                                {stage3Requests.length > 0 && (
-                                    <div className="mt-8 pt-6 border-t border-slate-100 w-full text-left space-y-8">
-
-                                        {/* SECCIÓN 2: Títulos y Gravámenes */}
-                                        {(() => {
-                                            const propertyDocs = stage3Requests.filter(req =>
-                                                ['titulos', 'legal', 'escritura_cv', 'inscripcion_anterior', 'posesion_efectiva', 'hipoteca', 'gp', 'inscripcion_herencia', 'herencia'].includes(req.tipo_documento?.toLowerCase()) ||
-                                                req.origen_solicitud === 'propiedad'
-                                            );
-                                            if (propertyDocs.length === 0) return null;
-                                            return (
-                                                <div className="animate-in fade-in slide-in-from-bottom-2">
-                                                    <h3 className="text-sm font-bold text-blue-800 uppercase mb-4 tracking-wider flex items-center gap-2">
-                                                        <Scroll size={16} />
-                                                        MOMENTO 2: Títulos y Gravámenes Extraídos
-                                                    </h3>
-                                                    <div className="space-y-3">
-                                                        {propertyDocs.map(req => (
-                                                            <Stage3UploadCard
-                                                                key={`s3_${req.id}`}
-                                                                docId={`s3_${req.id}`}
-                                                                req={req}
-                                                                docState={docStates[`s3_${req.id}`]}
-                                                                onUpload={handleUpload}
-                                                                isSubmitting={isSubmitting}
-                                                                onSkip={handleSkipDocument}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
-
-                                        {/* SECCIÓN 3: Antecedentes Personales y Otros */}
-                                        {(() => {
-                                            const personalDocs = stage3Requests.filter(req =>
-                                                !['titulos', 'legal', 'escritura_cv', 'inscripcion_anterior', 'posesion_efectiva', 'hipoteca', 'gp'].includes(req.tipo_documento?.toLowerCase()) &&
-                                                req.origen_solicitud !== 'propiedad'
-                                            );
-                                            if (personalDocs.length === 0) return null;
-                                            return (
-                                                <div className="animate-in fade-in slide-in-from-bottom-2">
-                                                    <h3 className="text-sm font-bold text-amber-700 uppercase mb-4 tracking-wider flex items-center gap-2">
-                                                        <FileCheck size={16} />
-                                                        MOMENTO 3: Documentación Personal y Otros
-                                                    </h3>
-                                                    <div className="space-y-3">
-                                                        {personalDocs.map(req => (
-                                                            <Stage3UploadCard
-                                                                key={`s3_${req.id}`}
-                                                                docId={`s3_${req.id}`}
-                                                                req={req}
-                                                                docState={docStates[`s3_${req.id}`]}
-                                                                onUpload={handleUpload}
-                                                                isSubmitting={isSubmitting}
-                                                                onSkip={handleSkipDocument}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
-
-                                    </div>
-                                )}
-
-                                {stage3Requests.length > 0 && stage3Requests.some(r => r.estado !== 'Completado') && (
-                                    <div className="sticky bottom-4 left-0 right-0 bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200 shadow-2xl flex justify-between items-center z-50 mt-12 gap-4">
-                                        <button
-                                            onClick={handleSubmit}
-                                            disabled={isSubmitting || isDocsSaved || !Object.entries(docStates).some(([k, s]) => k.startsWith('s3_') && (s.status === 'uploaded' || s.status === 'skipped'))}
-                                            className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all ${isDocsSaved
-                                                ? 'bg-green-50 text-green-700 border border-green-200'
-                                                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-100'
-                                                } disabled:opacity-50 shadow-lg transition-all`}
-                                        >
-                                            {isSubmitting ? (
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                                    Guardando...
-                                                </div>
-                                            ) : isDocsSaved ? (
-                                                <>Documentos Guardados <CheckCircle size={18} /></>
-                                            ) : (
-                                                <>Guardar Antecedentes <FileCheck size={18} /></>
-                                            )}
-                                        </button>
-
-                                        {isDocsSaved && (
-                                            <button
-                                                onClick={handleSendToReview}
-                                                className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all animate-bounce-subtle flex items-center gap-2"
-                                            >
-                                                Enviar a Revisión <Send size={18} />
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-
-                                {stage3Requests.length > 0 && !stage3Requests.some(r => r.estado !== 'Completado') && stage4Requests.length > 0 && (
-                                    <button
-                                        onClick={() => setCurrentStep(4)}
-                                        className="mt-8 bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg flex items-center gap-2 mx-auto"
-                                    >
-                                        Continuar a Fase 4 <ArrowRight size={18} />
-                                    </button>
-                                )}
-
-                                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl text-left border border-slate-100 opacity-50">
-                                    <div className="bg-slate-200 text-slate-400 p-1.5 rounded-full"><Clock size={14} /></div>
-                                    <span className="text-sm font-medium text-slate-500">Generación de informe final</span>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => navigate('/dashboard')}
-                                className="mt-12 text-blue-600 font-bold hover:text-blue-800 transition-colors flex items-center gap-2 mx-auto"
-                            >
-                                <ArrowLeft size={18} /> Volver al Dashboard
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="animate-in fade-in slide-in-from-right-4 duration-500 text-center py-12">
-                        {/* Paso 4: Documentación Final / Identidad */}
-                        <div className="bg-white p-10 rounded-3xl shadow-xl border border-slate-100 relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-2 bg-indigo-600"></div>
-                            {stage4Requests.some(r => r.estado !== 'Completado') ? (
-                                <>
-                                    <div className="inline-flex items-center justify-center p-4 bg-indigo-50 text-indigo-600 rounded-2xl mb-8">
-                                        <User size={48} className="animate-pulse" />
-                                    </div>
-                                    <h2 className="text-3xl font-bold text-slate-900 mb-4">Fase Final: Identidad y Estado Civil</h2>
-                                    <p className="text-slate-500 text-lg leading-relaxed mb-8">
-                                        Para finalizar el estudio, necesitamos validar la identidad y estado civil de los comparecientes.
-                                    </p>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="inline-flex items-center justify-center p-4 bg-green-50 text-green-600 rounded-2xl mb-8">
-                                        <CheckCircle size={48} className="animate-pulse" />
-                                    </div>
-                                    <h2 className="text-3xl font-bold text-slate-900 mb-4">Estudio en Etapa Final</h2>
-                                    <p className="text-slate-500 text-lg leading-relaxed mb-8">
-                                        Toda la documentación ha sido recolectada. Estamos generando el informe final del estudio de títulos.
-                                    </p>
-                                </>
-                            )}
-
-                            <div className="w-full space-y-4">
-                                {/* SECCIÓN 4: Documentación de Identidad */}
-                                {stage4Requests.length > 0 && (
-                                    <div className="mt-8 pt-6 border-t border-slate-100 w-full text-left space-y-8">
-                                        <div className="animate-in fade-in slide-in-from-bottom-2">
-                                            <h3 className="text-sm font-bold text-indigo-800 uppercase mb-4 tracking-wider flex items-center gap-2">
-                                                <User size={16} />
-                                                MOMENTO 4: Antecedentes de los Comparecientes
-                                            </h3>
-                                            <div className="space-y-3">
-                                                {stage4Requests.map(req => (
-                                                    <Stage3UploadCard
-                                                        key={`s4_${req.id}`}
-                                                        docId={`s4_${req.id}`}
-                                                        req={req}
-                                                        docState={docStates[`s4_${req.id}`]}
-                                                        onUpload={handleUpload}
-                                                        isSubmitting={isSubmitting}
-                                                        onSkip={handleSkipDocument}
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {stage4Requests.length > 0 && stage4Requests.some(r => r.estado !== 'Completado') && (
-                                    <div className="sticky bottom-4 left-0 right-0 bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200 shadow-2xl flex justify-between items-center z-50 mt-12 gap-4">
-                                        <button
-                                            onClick={handleSubmit}
-                                            disabled={isSubmitting || isDocsSaved || !Object.entries(docStates).some(([k, s]) => k.startsWith('s4_') && (s.status === 'uploaded' || s.status === 'skipped'))}
-                                            className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all ${isDocsSaved
-                                                ? 'bg-green-50 text-green-700 border border-green-200'
-                                                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-100'
-                                                } disabled:opacity-50 shadow-lg`}
-                                        >
-                                            {isSubmitting ? (
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                                    Guardando...
-                                                </div>
-                                            ) : isDocsSaved ? (
-                                                <>Documentos Guardados <CheckCircle size={18} /></>
-                                            ) : (
-                                                <>Guardar Documentos <FileCheck size={18} /></>
-                                            )}
-                                        </button>
-
-                                        {isDocsSaved && (
-                                            <button
-                                                onClick={handleSendToReview}
-                                                className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all animate-bounce-subtle flex items-center gap-2"
-                                            >
-                                                Enviar para Informe Final <Send size={18} />
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl text-left border border-slate-100 opacity-50">
-                                    <div className="bg-slate-200 text-slate-400 p-1.5 rounded-full"><Clock size={14} /></div>
-                                    <span className="text-sm font-medium text-slate-500">Generación de informe final</span>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => navigate('/dashboard')}
-                                className="mt-12 text-blue-600 font-bold hover:text-blue-800 transition-colors flex items-center gap-2 mx-auto"
-                            >
-                                <ArrowLeft size={18} /> Volver al Dashboard
-                            </button>
                         </div>
                     </div>
                 )}
