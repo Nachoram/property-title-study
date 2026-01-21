@@ -41,6 +41,16 @@ Gestiona la lista de documentos que el sistema "pide" al usuario para completar 
 | `propiedad_fojas` | TEXT | Fojas de la inscripción asociada a este documento específico. |
 | `propiedad_numero` | TEXT | Número de la inscripción. |
 | `propiedad_anio` | TEXT | Año de la inscripción. |
+| `propiedad_comuna` | TEXT | Comuna o CBR correspondiente. |
+| `doc_id_origen` | UUID | UUID del documento de origen si aplica. |
+| `rol_persona` | TEXT | Rol de la persona asociada (ej: PROPIEDAD). |
+| `doc_tipo` | TEXT | Tipo interno (ej: JUDICIAL, PLANO, INSCRIPCION). |
+| `doc_entidad` | TEXT | Entidad emisora del documento. |
+| `doc_fecha` | DATE | Fecha de emisión o registro. |
+| `doc_repertorio` | TEXT | Número de repertorio si aplica. |
+| `doc_resolucion` | TEXT | Número de resolución si aplica. |
+| `doc_rol` | TEXT | Número de rol si aplica. |
+| `doc_plano` | TEXT | Número de plano si aplica. |
 | `user_id` | UUID | Usuario que subió el documento. |
 
 ---

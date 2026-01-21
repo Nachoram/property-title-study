@@ -214,8 +214,8 @@ export function generateRequiredDocuments(formData) {
 
     // Dinámicos: Una solicitud de inscripción por cada unidad indicada (si es > 1)
     // El Dominio Vigente (Momento 1) cuenta como la primera inscripción.
-    // Si el usuario marcó más de 1, pedimos las copias de las inscripciones anteriores.
-    const count = parseInt(inscriptionsCount) || 1;
+    // MODIFICACION: Siempre será 1 inscripción inicial.
+    const count = 1;
     if (count > 1) {
         for (let i = 1; i < count; i++) {
             docs.push({

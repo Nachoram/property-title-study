@@ -987,14 +987,24 @@ export type Database = {
                 Row: {
                     created_at: string | null
                     destino_url: string | null
+                    doc_entidad: string | null
+                    doc_fecha: string | null
+                    doc_id_origen: string | null
+                    doc_plano: string | null
+                    doc_repertorio: string | null
+                    doc_resolucion: string | null
+                    doc_rol: string | null
+                    doc_tipo: string | null
                     documento_nombre: string
                     estudio_id: string | null
                     fase: number | null
                     id: string
                     id_referencia: number | null
                     propiedad_anio: number | null
+                    propiedad_comuna: string | null
                     propiedad_fojas: string | null
                     propiedad_numero: string | null
+                    rol_persona: string | null
                     solicitud_estado: string | null
                     solicitud_id: string | null
                     tipo_documento: string
@@ -1004,14 +1014,24 @@ export type Database = {
                 Insert: {
                     created_at?: string | null
                     destino_url?: string | null
+                    doc_entidad?: string | null
+                    doc_fecha?: string | null
+                    doc_id_origen?: string | null
+                    doc_plano?: string | null
+                    doc_repertorio?: string | null
+                    doc_resolucion?: string | null
+                    doc_rol?: string | null
+                    doc_tipo?: string | null
                     documento_nombre: string
                     estudio_id?: string | null
                     fase?: number | null
                     id?: string
                     id_referencia?: number | null
                     propiedad_anio?: number | null
+                    propiedad_comuna?: string | null
                     propiedad_fojas?: string | null
                     propiedad_numero?: string | null
+                    rol_persona?: string | null
                     solicitud_estado?: string | null
                     solicitud_id?: string | null
                     tipo_documento: string
@@ -1021,14 +1041,24 @@ export type Database = {
                 Update: {
                     created_at?: string | null
                     destino_url?: string | null
+                    doc_entidad?: string | null
+                    doc_fecha?: string | null
+                    doc_id_origen?: string | null
+                    doc_plano?: string | null
+                    doc_repertorio?: string | null
+                    doc_resolucion?: string | null
+                    doc_rol?: string | null
+                    doc_tipo?: string | null
                     documento_nombre?: string
                     estudio_id?: string | null
                     fase?: number | null
                     id?: string
                     id_referencia?: number | null
                     propiedad_anio?: number | null
+                    propiedad_comuna?: string | null
                     propiedad_fojas?: string | null
                     propiedad_numero?: string | null
+                    rol_persona?: string | null
                     solicitud_estado?: string | null
                     solicitud_id?: string | null
                     tipo_documento?: string

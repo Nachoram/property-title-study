@@ -119,11 +119,17 @@ const StatusPanel = ({ currentStep, progress, total, stage3Requests = [], stage4
 
 const SmartUploadCard = ({ doc, status, error, onUpload, onSkip }) => {
     const [isHovering, setIsHovering] = useState(false);
+    const [markedLocally, setMarkedLocally] = useState(false);
     const fileInputRef = useRef(null);
+
+    const isUploaded = status === 'uploaded';
+    const isSkipped = status === 'skipped' || markedLocally;
+    const isLoading = status === 'uploading';
+    const isError = status === 'error';
 
     const handleDragOver = (e) => {
         e.preventDefault();
-        if (status !== 'uploading' && status !== 'approved') setIsHovering(true);
+        if (!isUploaded && !isSkipped) setIsHovering(true);
     };
 
     const handleDragLeave = () => setIsHovering(false);
@@ -131,27 +137,15 @@ const SmartUploadCard = ({ doc, status, error, onUpload, onSkip }) => {
     const handleDrop = (e) => {
         e.preventDefault();
         setIsHovering(false);
-        if (status === 'uploading' || status === 'approved') return;
+        if (isUploaded || isSkipped) return;
         const file = e.dataTransfer.files?.[0];
         if (file) onUpload(doc.id, file);
     };
 
-    const handleClick = () => {
-        if (status !== 'uploading' && status !== 'approved' && status !== 'skipped') {
-            fileInputRef.current?.click();
-        }
+    const handleClick = (e) => {
+        if (e.target.closest('button')) return;
+        if (!isUploaded && !isSkipped) fileInputRef.current?.click();
     };
-
-    const handleChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            onUpload(doc.id, e.target.files[0]);
-        }
-    };
-
-    const isUploaded = status === 'uploaded';
-    const isSkipped = status === 'skipped';
-    const isLoading = status === 'uploading';
-    const isError = status === 'error';
 
     return (
         <div
@@ -159,116 +153,78 @@ const SmartUploadCard = ({ doc, status, error, onUpload, onSkip }) => {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={handleClick}
-            className={`
-                group relative p-6 rounded-2xl border-2 transition-all duration-300
-                ${isUploaded
-                    ? 'bg-green-50/50 border-green-200 shadow-sm'
-                    : isSkipped
-                        ? 'bg-slate-50 border-slate-200 opacity-75'
-                        : isError
-                            ? 'bg-red-50/50 border-red-200 shadow-sm'
-                            : isHovering
-                                ? 'bg-blue-50 border-blue-400 shadow-md scale-[1.01]'
-                                : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-lg cursor-pointer border-dashed'
-                }
-            `}
+            className={`group relative p-6 rounded-2xl border-2 transition-all duration-300 ${isUploaded ? 'bg-green-50/50 border-green-200' :
+                isSkipped ? 'bg-slate-50 border-slate-200 opacity-50 grayscale' :
+                    isHovering ? 'bg-blue-50 border-blue-400 scale-[1.01]' :
+                        'bg-white border-slate-100 hover:border-blue-200 cursor-pointer border-dashed'
+                }`}
         >
             <input
                 type="file"
-                ref={fileInputRef}
-                onChange={handleChange}
                 className="hidden"
+                ref={fileInputRef}
+                onChange={(e) => e.target.files?.[0] && onUpload(doc.id, e.target.files[0])}
                 accept=".pdf,.png,.jpg,.jpeg"
             />
 
-            <div className="flex items-start gap-4">
-                <div className={`
-                    p-3 rounded-xl transition-colors
-                    ${isUploaded ? 'bg-green-100 text-green-700' : isSkipped ? 'bg-slate-200 text-slate-500' : isError ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500 group-hover:bg-blue-50'}
-                `}>
-                    <doc.icon size={24} />
+            <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                    <div className={`p-3 rounded-xl ${isUploaded ? 'bg-green-100 text-green-600' : isSkipped ? 'bg-slate-200 text-slate-400' : 'bg-blue-50 text-blue-600'}`}>
+                        {isSkipped ? <XCircle size={24} /> : (doc.icon ? <doc.icon size={24} /> : <FileCheck size={24} />)}
+                    </div>
+                    <div>
+                        <h3 className={`font-bold text-lg leading-tight ${isSkipped ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{doc.label}</h3>
+                        <p className={`text-sm mt-1 ${isSkipped ? 'text-slate-300' : 'text-slate-500'}`}>{doc.description}</p>
+                    </div>
                 </div>
+                {isUploaded && <CheckCircle className="text-green-500" size={24} />}
+                {isLoading && <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>}
+            </div>
 
-                <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                        <h3 className="font-bold text-slate-800 text-lg leading-tight">{doc.label}</h3>
-                        <div className="flex items-center gap-2">
-                            {isUploaded && <CheckCircle className="text-green-500" size={20} />}
-                            {isSkipped && <XCircle className="text-slate-400" size={20} />}
-                            {isError && <XCircle className="text-red-500" size={20} />}
-                            {isLoading && <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>}
-                            {!isUploaded && !isSkipped && !isError && !isLoading && (
-                                <div className={`p-2 rounded-full transition-colors ${isHovering ? 'bg-blue-600 text-white' : 'text-slate-300'}`}>
-                                    <Upload size={18} />
-                                </div>
-                            )}
-                        </div>
-                    </div>
+            <div className="mt-6 flex items-center justify-between">
+                <span className="text-[10px] font-black tracking-widest uppercase text-slate-400">
+                    {isUploaded ? 'Documento Listo' : isSkipped ? 'Excluido' : 'Pendiente'}
+                </span>
 
-                    <p className="text-sm text-slate-500 mt-1 leading-relaxed">{doc.description}</p>
-
-                    {doc.alert && !isUploaded && !isSkipped && (
-                        <div className="mt-3 text-[11px] font-bold px-2 py-1 bg-amber-50 text-amber-700 rounded border border-amber-100 inline-flex items-center gap-1.5 uppercase tracking-wide">
-                            <AlertCircle size={12} />
-                            {doc.alert}
-                        </div>
+                <div className="flex gap-2">
+                    {!isUploaded && !isSkipped && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setMarkedLocally(true);
+                                onSkip(doc.id, doc.dbId);
+                            }}
+                            className="bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-sm active:scale-95"
+                        >
+                            No es útil
+                        </button>
                     )}
-
-                    {isError && (
-                        <div className="mt-3 text-sm text-red-600 bg-red-100/30 p-2 rounded-lg border border-red-100 flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
-                            <AlertCircle size={16} className="mt-0.5 shrink-0" />
-                            <span className="font-medium">{error || 'Error al subir documento'}</span>
-                        </div>
+                    {isSkipped && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setMarkedLocally(false);
+                                onUpload(doc.id, null);
+                            }}
+                            className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-md active:scale-95"
+                        >
+                            Habilitar
+                        </button>
                     )}
-
-                    <div className="mt-4 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-[10px] font-black tracking-widest uppercase transition-colors">
-                            {isUploaded ? (
-                                <span className="text-green-600">Documento Listo</span>
-                            ) : isSkipped ? (
-                                <span className="text-slate-400">No será analizado</span>
-                            ) : (
-                                <span className="text-slate-400 group-hover:text-blue-600">
-                                    Arrastra o selecciona archivo
-                                </span>
-                            )}
-                        </div>
-
-                        {!isUploaded && !isSkipped && !isLoading && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onSkip(doc.id, doc.dbId);
-                                }}
-                                className="text-[10px] font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest underline underline-offset-2"
-                            >
-                                No es útil para mi fin
-                            </button>
-                        )}
-                        {isSkipped && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onUpload(doc.id, null); // Reset to pending
-                                }}
-                                className="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-widest"
-                            >
-                                Volver a habilitar
-                            </button>
-                        )}
-                    </div>
                 </div>
             </div>
         </div>
     );
 };
 
-const Stage3UploadCard = ({ req, docState, onUpload, onSkip, isSubmitting }) => {
+const Stage3UploadCard = ({ docId, req, docState, onUpload, onSkip, isSubmitting }) => {
     const [isHovering, setIsHovering] = useState(false);
+    const [markedLocally, setMarkedLocally] = useState(false);
     const fileInputRef = useRef(null);
+
     const isUploaded = docState?.status === 'uploaded';
-    const isSkipped = docState?.status === 'skipped';
-    const key = `s3_${req.id}`;
+    const isSkipped = docState?.status === 'skipped' || markedLocally;
+    const key = docId;
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -285,7 +241,8 @@ const Stage3UploadCard = ({ req, docState, onUpload, onSkip, isSubmitting }) => 
         if (file) onUpload(key, file);
     };
 
-    const handleClick = () => {
+    const handleClick = (e) => {
+        if (e.target.closest('button')) return;
         if (!isUploaded && !isSkipped) fileInputRef.current?.click();
     };
 
@@ -295,17 +252,11 @@ const Stage3UploadCard = ({ req, docState, onUpload, onSkip, isSubmitting }) => 
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={handleClick}
-            className={`
-                group relative p-6 rounded-2xl border-2 transition-all duration-300
-                ${isUploaded
-                    ? 'bg-green-50/50 border-green-200 shadow-sm'
-                    : isSkipped
-                        ? 'bg-slate-50 border-slate-200 opacity-75'
-                        : isHovering
-                            ? 'bg-blue-50 border-blue-400 shadow-md scale-[1.01]'
-                            : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-lg cursor-pointer border-dashed'
-                }
-            `}
+            className={`group relative p-6 rounded-2xl border-2 transition-all duration-300 ${isUploaded ? 'bg-green-50/50 border-green-200 shadow-sm' :
+                isSkipped ? 'bg-slate-50 border-slate-200 opacity-50 grayscale' :
+                    isHovering ? 'bg-blue-50 border-blue-400 shadow-md scale-[1.01]' :
+                        'bg-white border-slate-100 hover:border-blue-200 hover:shadow-lg cursor-pointer border-dashed'
+                }`}
         >
             <input
                 type="file"
@@ -316,103 +267,70 @@ const Stage3UploadCard = ({ req, docState, onUpload, onSkip, isSubmitting }) => 
             />
 
             <div className="flex items-start gap-4">
-                <div className={`
-                    p-3 rounded-xl transition-colors
-                    ${isUploaded ? 'bg-green-100 text-green-600' : isSkipped ? 'bg-slate-200 text-slate-500' : 'bg-blue-50 text-blue-600 group-hover:bg-blue-100'}
-                `}>
-                    {['titulos', 'legal', 'escritura_cv', 'inscripcion_anterior', 'posesion_efectiva', 'hipoteca', 'gp', 'inscripcion_herencia', 'herencia'].includes(req.tipo_documento?.toLowerCase())
-                        ? <Scroll size={24} />
-                        : <FileCheck size={24} />
-                    }
+                <div className={`p-3 rounded-xl ${isUploaded ? 'bg-green-100 text-green-600' : isSkipped ? 'bg-slate-200 text-slate-400' : 'bg-blue-50 text-blue-600 group-hover:bg-blue-100'}`}>
+                    {isSkipped ? <XCircle size={24} /> : <Scroll size={24} />}
                 </div>
 
                 <div className="flex-1">
                     <div className="flex justify-between items-start">
-                        <div>
-                            <h3 className="font-bold text-slate-900 text-lg leading-tight">
+                        <div className="flex-1">
+                            <h3 className={`font-bold text-lg leading-tight transition-all ${isSkipped ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
                                 {req.nombre_documento || req.tipo_documento}
                             </h3>
-
-                            {(req.propiedad_fojas || req.propiedad_numero || req.propiedad_anio || req.propiedad_comuna) && (
-                                <p className="text-xs font-bold text-blue-700 mt-1.5 uppercase tracking-wide bg-blue-50 inline-block px-2 py-0.5 rounded">
-                                    {req.propiedad_fojas && `Fojas: ${req.propiedad_fojas} `}
-                                    {req.propiedad_numero && `Nº: ${req.propiedad_numero} `}
-                                    {req.propiedad_anio && `Año: ${req.propiedad_anio} `}
-                                    {req.propiedad_comuna && ` | ${req.propiedad_comuna}`}
-                                </p>
+                            {/* Identificadores del documento */}
+                            {(req.propiedad_fojas || req.propiedad_numero || req.propiedad_anio || req.doc_repertorio || req.doc_resolucion || req.doc_rol || req.doc_plano) && (
+                                <div className={`mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-medium ${isSkipped ? 'text-slate-300' : 'text-blue-600'}`}>
+                                    {req.propiedad_fojas && <span>Fjs: {req.propiedad_fojas}</span>}
+                                    {req.propiedad_numero && <span>N°: {req.propiedad_numero}</span>}
+                                    {req.propiedad_anio && <span>Año: {req.propiedad_anio}</span>}
+                                    {req.propiedad_comuna && <span className="text-slate-500">• {req.propiedad_comuna}</span>}
+                                    {req.doc_repertorio && <span>Rep: {req.doc_repertorio}</span>}
+                                    {req.doc_resolucion && <span>Res: {req.doc_resolucion}</span>}
+                                    {req.doc_rol && <span>Rol: {req.doc_rol}</span>}
+                                    {req.doc_plano && <span>Plano: {req.doc_plano}</span>}
+                                </div>
                             )}
+                            {isSkipped && <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100 inline-block mt-1">EXCLUIDO</span>}
                         </div>
-
-                        {isUploaded ? (
-                            <div className="bg-green-500 text-white p-1 rounded-full">
-                                <CheckCircle size={20} />
-                            </div>
-                        ) : isSkipped ? (
-                            <div className="bg-slate-400 text-white p-1 rounded-full">
-                                <XCircle size={20} />
-                            </div>
-                        ) : (
-                            <div className={`p-2 rounded-full transition-colors ${isHovering ? 'bg-blue-600 text-white' : 'text-slate-300'}`}>
-                                <Upload size={20} />
-                            </div>
-                        )}
+                        {isUploaded && <CheckCircle className="text-green-500" size={24} />}
                     </div>
 
-                    {req.detalle && (
-                        <p className="text-sm text-slate-500 mt-2 italic border-l-2 border-slate-200 pl-3">
-                            {req.detalle}
-                        </p>
-                    )}
+                    {req.detalle && <p className={`text-sm mt-2 italic border-l-2 pl-3 ${isSkipped ? 'text-slate-300 border-slate-100' : 'text-slate-500 border-slate-200'}`}>{req.detalle}</p>}
 
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
-                        {(req.nombre_persona || req.rut_persona) ? (
-                            <div className="flex items-center gap-2">
-                                <div className="bg-slate-100 text-slate-500 p-1 rounded-md">
-                                    <User size={14} />
-                                </div>
-                                <span className="text-xs font-semibold text-slate-600">
-                                    {req.nombre_persona} {req.rut_persona ? `(RUT: ${req.rut_persona})` : ''}
-                                </span>
-                            </div>
-                        ) : <div />}
+                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-100">
+                        <div className="flex items-center gap-2">
+                            {req.nombre_persona && <span className="text-xs font-semibold text-slate-600 truncate max-w-[150px]"><User size={12} className="inline mr-1" />{req.nombre_persona}</span>}
+                        </div>
 
-                        <div className="flex items-center gap-4">
-                            {isUploaded ? (
-                                <span className="text-[10px] font-black text-green-600 tracking-widest uppercase">Documento Listo</span>
-                            ) : isSkipped ? (
-                                <div className="flex items-center gap-3">
-                                    <span className="text-[10px] font-black text-slate-400 tracking-widest uppercase">No aplica</span>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onUpload(key, null);
-                                        }}
-                                        className="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-widest"
-                                    >
-                                        Habilitar
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-4">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onSkip(key, req.id);
-                                        }}
-                                        className="text-[10px] font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest underline underline-offset-2"
-                                    >
-                                        No es útil
-                                    </button>
-                                    <span className="text-[10px] font-bold text-slate-400 group-hover:text-blue-600 transition-colors uppercase tracking-widest">
-                                        Arrastra o selecciona
-                                    </span>
-                                </div>
+                        <div className="flex gap-2">
+                            {!isUploaded && !isSkipped && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setMarkedLocally(true);
+                                        onSkip(key, req.id);
+                                    }}
+                                    className="bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all active:scale-95 shadow-sm"
+                                >
+                                    No es útil
+                                </button>
+                            )}
+                            {isSkipped && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setMarkedLocally(false);
+                                        onUpload(key, null);
+                                    }}
+                                    className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-md active:scale-95"
+                                >
+                                    Habilitar
+                                </button>
                             )}
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
     );
 };
@@ -1141,19 +1059,20 @@ export default function StudyPage() {
                                         <label className="block text-sm font-medium text-slate-700 mb-3">
                                             ¿Cuántas inscripciones ha tenido la propiedad en los últimos 10 años? (Aproximado)
                                         </label>
-                                        <div className="flex flex-wrap gap-3">
-                                            {[1, 2, 3, 4, 5, '6 o más'].map((num) => (
-                                                <button
-                                                    key={num}
-                                                    onClick={() => setTransactionsCount(num)}
-                                                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${transactionsCount === num
-                                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-200 border-blue-600'
-                                                        : 'bg-white text-slate-600 border border-slate-200 hover:border-blue-300 hover:text-blue-600'
-                                                        }`}
-                                                >
-                                                    {num} {num === 1 ? 'Inscripción' : 'Inscripciones'}
-                                                </button>
-                                            ))}
+                                        <div className="relative">
+                                            <select
+                                                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg appearance-none bg-white focus:ring-2 focus:ring-blue-500 outline-none font-medium text-slate-700"
+                                                value={transactionsCount}
+                                                onChange={(e) => setTransactionsCount(parseInt(e.target.value))}
+                                            >
+                                                {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                                                    <option key={num} value={num}>
+                                                        {num} {num === 1 ? 'Inscripción' : 'Inscripciones'}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <Scroll className="absolute left-3 top-2.5 text-slate-400" size={18} />
+                                            <ChevronDown className="absolute right-3 top-2.5 text-slate-400 pointer-events-none" size={18} />
                                         </div>
                                     </div>
                                 </div>
@@ -1286,6 +1205,7 @@ export default function StudyPage() {
                                                         {propertyDocs.map(req => (
                                                             <Stage3UploadCard
                                                                 key={`s3_${req.id}`}
+                                                                docId={`s3_${req.id}`}
                                                                 req={req}
                                                                 docState={docStates[`s3_${req.id}`]}
                                                                 onUpload={handleUpload}
@@ -1315,6 +1235,7 @@ export default function StudyPage() {
                                                         {personalDocs.map(req => (
                                                             <Stage3UploadCard
                                                                 key={`s3_${req.id}`}
+                                                                docId={`s3_${req.id}`}
                                                                 req={req}
                                                                 docState={docStates[`s3_${req.id}`]}
                                                                 onUpload={handleUpload}
@@ -1425,6 +1346,7 @@ export default function StudyPage() {
                                                 {stage4Requests.map(req => (
                                                     <Stage3UploadCard
                                                         key={`s4_${req.id}`}
+                                                        docId={`s4_${req.id}`}
                                                         req={req}
                                                         docState={docStates[`s4_${req.id}`]}
                                                         onUpload={handleUpload}
