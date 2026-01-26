@@ -115,6 +115,21 @@ El sistema utiliza tablas específicas para cada tipo de documento para almacena
 - `unidades_con_morosidad`: JSONB con el detalle de deudas por unidad.
 - `resumen_situacion`: Análisis textual de la deuda de la comunidad.
 
+#### `ocr_Escritura_Constitucion_aporte`
+- `fecha_escritura`: TEXT. Fecha de la escritura pública.
+- `notaria`: TEXT. Nombre de la notaría donde se otorgó.
+- `repertorio`: TEXT. Número de repertorio de la escritura.
+- `sociedad_adquirente`: JSONB con datos de la sociedad que adquiere.
+- `malla_societaria`: JSONB (Array) con los socios y sus participaciones.
+- `identificacion_aportante_naturaleza`: JSONB con datos del aportante y contexto.
+- `naturaleza_acto`: TEXT (ej: DIVISION_DE_SOCIEDAD, APORTE_CAPITAL).
+- `organo_administracion`, `forma_actuacion`: Detalles de la administración.
+- `administradores_designados`: JSONB (Array) con nombres y ruts.
+- `facultad_vender`, `facultad_hipotecar`, `facultad_enajenar`: Booleans indicando poderes clave.
+- `individualizacion_aporte`: JSONB con la causa y valor total.
+- `lista_inmuebles_aportados`: JSONB (Array) con el detalle de cada propiedad.
+- `analisis_validez`: JSONB con verificaciones legales.
+
 ---
 
 ## 3. Automatización y Triggers

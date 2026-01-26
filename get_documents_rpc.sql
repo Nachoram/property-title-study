@@ -39,12 +39,13 @@ BEGIN
                 ''id'', id, 
                 ''url'', %I, 
                 ''fase'', %s,
-                ''enviado'', COALESCE(enviado, FALSE)
+                ''enviado'', %s
               )) 
               FROM %I 
               WHERE %I = %L AND %I IS NOT NULL', 
               v_t, v_url_col, 
               CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = v_t AND column_name = 'fase') THEN 'fase' ELSE 'NULL' END,
+              CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = v_t AND column_name = 'enviado') THEN 'COALESCE(enviado, FALSE)' ELSE 'FALSE' END,
               v_t, v_op_col, p_numero_operacion, v_url_col);
               
           IF p_fase IS NOT NULL THEN
@@ -107,7 +108,7 @@ BEGIN
     FROM (
       SELECT DISTINCT ON (val->>'url') val as elem
       FROM jsonb_array_elements(v_results) val
-      ORDER BY val->>'url', CASE WHEN val->>'table' = 'solicitud_documentos' THEN 1 ELSE 0 END ASC, id DESC
+      ORDER BY val->>'url', CASE WHEN val->>'table' = 'solicitud_documentos' THEN 1 ELSE 0 END ASC, val->>'id' DESC
     ) t
   );
 END;

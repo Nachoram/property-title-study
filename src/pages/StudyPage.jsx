@@ -376,7 +376,7 @@ export default function StudyPage() {
                 .from('estudios_titulos')
                 .select('id, estado, nombre_propiedad, tipo_propiedad, finalidad_estudio, cantidad_transacciones')
                 .eq('numero_operacion', operationId)
-                .single();
+                .maybeSingle();
 
             let effectiveStep = 1;
 

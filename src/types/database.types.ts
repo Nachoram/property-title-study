@@ -271,6 +271,104 @@ export type Database = {
                     },
                 ]
             }
+            ocr_Escritura_Constitucion_aporte: {
+                Row: {
+                    administradores_designados: Json | null
+                    analisis_validez: Json | null
+                    completado: boolean | null
+                    created_at: string
+                    documento_url: string | null
+                    enviado: boolean | null
+                    estudio_id: string | null
+                    facultad_enajenar: boolean | null
+                    facultad_hipotecar: boolean | null
+                    facultad_vender: boolean | null
+                    fase: number | null
+                    fecha_escritura: string | null
+                    forma_actuacion: string | null
+                    id: string
+                    identificacion_aportante_naturaleza: Json | null
+                    individualizacion_aporte: Json | null
+                    lista_inmuebles_aportados: Json | null
+                    malla_societaria: Json | null
+                    naturaleza_acto: string | null
+                    notaria: string | null
+                    numero_operacion: string | null
+                    organo_administracion: string | null
+                    repertorio: string | null
+                    sociedad_adquirente: Json | null
+                    updated_at: string
+                    user_id: string | null
+                    verificado: boolean | null
+                }
+                Insert: {
+                    administradores_designados?: Json | null
+                    analisis_validez?: Json | null
+                    completado?: boolean | null
+                    created_at?: string
+                    documento_url?: string | null
+                    enviado?: boolean | null
+                    estudio_id?: string | null
+                    facultad_enajenar?: boolean | null
+                    facultad_hipotecar?: boolean | null
+                    facultad_vender?: boolean | null
+                    fase?: number | null
+                    fecha_escritura?: string | null
+                    forma_actuacion?: string | null
+                    id?: string
+                    identificacion_aportante_naturaleza?: Json | null
+                    individualizacion_aporte?: Json | null
+                    lista_inmuebles_aportados?: Json | null
+                    malla_societaria?: Json | null
+                    naturaleza_acto?: string | null
+                    notaria?: string | null
+                    numero_operacion?: string | null
+                    organo_administracion?: string | null
+                    repertorio?: string | null
+                    sociedad_adquirente?: Json | null
+                    updated_at?: string
+                    user_id?: string | null
+                    verificado?: boolean | null
+                }
+                Update: {
+                    administradores_designados?: Json | null
+                    analisis_validez?: Json | null
+                    completado?: boolean | null
+                    created_at?: string
+                    documento_url?: string | null
+                    enviado?: boolean | null
+                    estudio_id?: string | null
+                    facultad_enajenar?: boolean | null
+                    facultad_hipotecar?: boolean | null
+                    facultad_vender?: boolean | null
+                    fase?: number | null
+                    fecha_escritura?: string | null
+                    forma_actuacion?: string | null
+                    id?: string
+                    identificacion_aportante_naturaleza?: Json | null
+                    individualizacion_aporte?: Json | null
+                    lista_inmuebles_aportados?: Json | null
+                    malla_societaria?: Json | null
+                    naturaleza_acto?: string | null
+                    notaria?: string | null
+                    numero_operacion?: string | null
+                    organo_administracion?: string | null
+                    repertorio?: string | null
+                    sociedad_adquirente?: Json | null
+                    updated_at?: string
+                    user_id?: string | null
+                    verificado?: boolean | null
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "ocr_Escritura_Constitucion_aporte_estudio_id_fkey"
+                        columns: ["estudio_id"]
+                        isOneToOne: false
+                        referencedRelation: "estudios_titulos"
+                        referencedColumns: ["id"]
+                    },
+                ]
+            }
             ocr_dominio_vigente: {
                 Row: {
                     anio: number | null

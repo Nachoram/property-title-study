@@ -72,6 +72,8 @@ BEGIN
     v_table_name := 'ocr_poderes';
   ELSIF v_filename ILIKE '%donacion%' THEN
     v_table_name := 'ocr_donacion';
+  ELSIF v_filename ILIKE '%constitucion_aporte%' OR v_filename ILIKE '%Escritura_Constitucion_aporte%' THEN
+    v_table_name := 'ocr_Escritura_Constitucion_aporte';
   ELSE
     INSERT INTO public.debug_logs (message) VALUES ('No matching table found for file: ' || v_filename);
     RETURN NEW;
