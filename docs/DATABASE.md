@@ -51,6 +51,8 @@ Gestiona la lista de documentos que el sistema "pide" al usuario para completar 
 | `doc_resolucion` | TEXT | Número de resolución si aplica. |
 | `doc_rol` | TEXT | Número de rol si aplica. |
 | `doc_plano` | TEXT | Número de plano si aplica. |
+| `notaria_documento` | TEXT | Nombre de la notaría asociada al documento. |
+| `repetido` | BOOLEAN | Flag que indica si el documento es un duplicado de otro existente. |
 | `user_id` | UUID | Usuario que subió el documento. |
 
 ---
@@ -130,6 +132,17 @@ El sistema utiliza tablas específicas para cada tipo de documento para almacena
 - `lista_inmuebles_aportados`: JSONB (Array) con el detalle de cada propiedad.
 - `analisis_validez`: JSONB con verificaciones legales.
 
+#### `ocr_escritura_cv` (Escritura de Compraventa)
+- `notaria`, `fecha_escritura`, `repertorio`: Datos de otorgamiento.
+- `precio_monto`, `precio_moneda`, `forma_pago`: Detalles económicos.
+- `partes_comparecientes`: JSONB con datos de vendedores y compradores.
+- `direccion_objeto`, `comuna_objeto`, `rol_avaluo`: Identificación de la propiedad.
+- `deslindes`: Texto con los límites de la propiedad.
+- `precio_venta_texto`: Transcripción del precio en palabras.
+- `titulo_anterior`: Referencia a la inscripción previa.
+- `declaracion_pago_total`: BOOLEAN. Indica si el precio está totalmente pagado.
+- `renuncia_accion_resolutoria`: BOOLEAN. Indica si las partes renuncian a resolver el contrato por no pago.
+
 ---
 
 ## 3. Automatización y Triggers
@@ -146,6 +159,19 @@ Este es un **Trigger** de PostgreSQL que se ejecuta `AFTER INSERT` en la tabla `
    - Si contiene "rol" o "avaluo" -> inserta en `ocr_avaluo_fiscal`.
 4. Obtiene el `user_id` y genera la `public_url`.
 5. Ejecuta un `INSERT` dinámico en la tabla correspondiente.
+
+
+
+### Validación de Duplicados (`check_duplicate_solicitud_trigger`)
+Este es un **Trigger** de PostgreSQL ejecutado `BEFORE INSERT OR UPDATE` en `solicitud_documentos`.
+
+**Lógica de Ejecución:**
+Marca el flag `repetido = TRUE` si encuentra otro documento en la misma operación que cumpla alguna de estas condiciones:
+1. Mismo nombre de documento y mismo RUT de persona.
+2. Mismo número de repertorio.
+3. Mismas coordenadas de inscripción: Fojas, Número y Año.
+4. Mismo nombre de documento y misma fecha.
+5. Mismo número de plano (comparando solo dígitos, mínimo 2).
 
 ### Agregador de Documentos (`get_operation_documents`)
 Esta es una **Función RPC** que permite al frontend obtener un resumen de todos los documentos cargados en una operación sin tener que consultar 20 tablas una por una. Retorna un JSON consolidado.

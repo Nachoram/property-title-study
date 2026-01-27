@@ -440,6 +440,7 @@ export type Database = {
             ocr_escritura_cv: {
                 Row: {
                     completado: boolean | null
+                    declaracion_pago_total: boolean | null
                     documento_url: string | null
                     estado: string | null
                     estudio_id: string | null
@@ -447,11 +448,13 @@ export type Database = {
                     id: string
                     nombre_archivo: string | null
                     operacion_id: string | null
+                    renuncia_accion_resolutoria: boolean | null
                     user_id: string | null
                     verificado: boolean | null
                 }
                 Insert: {
                     completado?: boolean | null
+                    declaracion_pago_total?: boolean | null
                     documento_url?: string | null
                     estado?: string | null
                     estudio_id?: string | null
@@ -459,11 +462,13 @@ export type Database = {
                     id?: string
                     nombre_archivo?: string | null
                     operacion_id?: string | null
+                    renuncia_accion_resolutoria?: boolean | null
                     user_id?: string | null
                     verificado?: boolean | null
                 }
                 Update: {
                     completado?: boolean | null
+                    declaracion_pago_total?: boolean | null
                     documento_url?: string | null
                     estado?: string | null
                     estudio_id?: string | null
@@ -471,6 +476,7 @@ export type Database = {
                     id?: string
                     nombre_archivo?: string | null
                     operacion_id?: string | null
+                    renuncia_accion_resolutoria?: boolean | null
                     user_id?: string | null
                     verificado?: boolean | null
                 }
@@ -1098,6 +1104,7 @@ export type Database = {
                     fase: number | null
                     id: string
                     id_referencia: number | null
+                    notaria_documento: string | null
                     propiedad_anio: number | null
                     propiedad_comuna: string | null
                     propiedad_fojas: string | null
@@ -1125,6 +1132,7 @@ export type Database = {
                     fase?: number | null
                     id?: string
                     id_referencia?: number | null
+                    notaria_documento?: string | null
                     propiedad_anio?: number | null
                     propiedad_comuna?: string | null
                     propiedad_fojas?: string | null
@@ -1152,6 +1160,7 @@ export type Database = {
                     fase?: number | null
                     id?: string
                     id_referencia?: number | null
+                    notaria_documento?: string | null
                     propiedad_anio?: number | null
                     propiedad_comuna?: string | null
                     propiedad_fojas?: string | null

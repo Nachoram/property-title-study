@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     Upload,
@@ -12,13 +12,17 @@ import {
     Send,
     Landmark,
     Building,
-    ChevronDown,
-    ArrowRight,
-    ArrowLeft,
-    Scroll,
-    Map,
     LogOut,
-    User
+    User,
+    Calendar,
+    Hash,
+    MapPin,
+    Tag,
+    Scroll,
+    ArrowLeft,
+    ArrowRight,
+    ChevronDown,
+    Map
 } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { supabase } from '../lib/supabase';
@@ -117,6 +121,92 @@ const StatusPanel = ({ currentStep, progress, total, stage3Requests = [], stage4
     );
 };
 
+// --- Helpers ---
+const formatDate = (dateString) => {
+    if (!dateString) return null;
+    try {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat('es-CL', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }).format(date);
+    } catch (e) {
+        return dateString;
+    }
+};
+
+const MetadataBlock = ({ req, isSkipped }) => {
+    if (!req) return null;
+    return (
+        <div className="flex flex-col gap-2 mt-2">
+            {/* Row 1: Registration Data */}
+            {(req.propiedad_fojas || req.propiedad_numero || req.propiedad_anio || req.propiedad_comuna) && (
+                <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-semibold ${isSkipped ? 'text-slate-300' : 'text-blue-600'}`}>
+                    <div className="flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                        <Hash size={10} />
+                        <span>Fjs: {req.propiedad_fojas || '-'}</span>
+                        <span className="mx-0.5">•</span>
+                        <span>N°: {req.propiedad_numero || '-'}</span>
+                        <span className="mx-0.5">•</span>
+                        <span>Año: {req.propiedad_anio || '-'}</span>
+                    </div>
+                    {req.propiedad_comuna && (
+                        <div className="flex items-center gap-1 text-slate-500">
+                            <MapPin size={10} />
+                            <span>{req.propiedad_comuna}</span>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Row 2: Origin Data (Notary, Repertory, Date) */}
+            {(req.notaria_documento || req.doc_entidad || req.doc_repertorio || req.doc_fecha) && (
+                <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-medium ${isSkipped ? 'text-slate-300' : 'text-slate-600'}`}>
+                    {(req.notaria_documento || req.doc_entidad) && (
+                        <div className="flex items-center gap-1">
+                            <Building size={10} className="shrink-0" />
+                            <span className="truncate max-w-[200px]">{req.notaria_documento || req.doc_entidad}</span>
+                        </div>
+                    )}
+                    {req.doc_repertorio && (
+                        <div className="flex items-center gap-1">
+                            <Scroll size={10} className="shrink-0" />
+                            <span>Rep: {req.doc_repertorio}</span>
+                        </div>
+                    )}
+                    {req.doc_fecha && (
+                        <div className="flex items-center gap-1">
+                            <Calendar size={10} className="shrink-0" />
+                            <span>{formatDate(req.doc_fecha)}</span>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Row 3: Other identifiers */}
+            {(req.doc_resolucion || req.doc_rol || req.doc_plano) && (
+                <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] ${isSkipped ? 'text-slate-300' : 'text-slate-400'}`}>
+                    {req.doc_resolucion && <span>Resolución: {req.doc_resolucion}</span>}
+                    {req.doc_rol && <span>Rol: {req.doc_rol}</span>}
+                    {req.doc_plano && <span>Plano: {req.doc_plano}</span>}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const PersonaTag = ({ name, role, isSkipped }) => {
+    if (!name) return null;
+    return (
+        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ring-1 transition-all ${isSkipped ? 'bg-slate-50 text-slate-400 ring-slate-100' : 'bg-blue-50 text-blue-700 ring-blue-100'}`}>
+            <User size={12} className="shrink-0" />
+            <span className="truncate max-w-[200px]">{name}</span>
+            {role && <span className="text-[10px] opacity-60 ml-0.5 font-normal uppercase">({role})</span>}
+        </div>
+    );
+};
+
 const SmartUploadCard = ({ doc, status, error, onUpload, onSkip }) => {
     const [isHovering, setIsHovering] = useState(false);
     const [markedLocally, setMarkedLocally] = useState(false);
@@ -125,7 +215,6 @@ const SmartUploadCard = ({ doc, status, error, onUpload, onSkip }) => {
     const isUploaded = status === 'uploaded';
     const isSkipped = status === 'skipped' || markedLocally;
     const isLoading = status === 'uploading';
-    const isError = status === 'error';
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -168,23 +257,29 @@ const SmartUploadCard = ({ doc, status, error, onUpload, onSkip }) => {
             />
 
             <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-4">
                     <div className={`p-3 rounded-xl ${isUploaded ? 'bg-green-100 text-green-600' : isSkipped ? 'bg-slate-200 text-slate-400' : 'bg-blue-50 text-blue-600'}`}>
                         {isSkipped ? <XCircle size={24} /> : (doc.icon ? <doc.icon size={24} /> : <FileCheck size={24} />)}
                     </div>
-                    <div>
+                    <div className="flex-1">
                         <h3 className={`font-bold text-lg leading-tight ${isSkipped ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{doc.label}</h3>
-                        <p className={`text-sm mt-1 ${isSkipped ? 'text-slate-300' : 'text-slate-500'}`}>{doc.description}</p>
+                        <MetadataBlock req={doc.req} isSkipped={isSkipped} />
+                        {doc.description && <p className={`text-sm mt-3 italic border-l-2 pl-3 py-0.5 ${isSkipped ? 'text-slate-300 border-slate-100' : 'text-slate-500 border-slate-200 bg-slate-50/50 rounded-r-lg'}`}>{doc.description}</p>}
                     </div>
                 </div>
-                {isUploaded && <CheckCircle className="text-green-500" size={24} />}
+                {isUploaded && <CheckCircle className="text-green-500 shrink-0" size={24} />}
                 {isLoading && <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>}
             </div>
 
             <div className="mt-6 flex items-center justify-between">
-                <span className="text-[10px] font-black tracking-widest uppercase text-slate-400">
-                    {isUploaded ? 'Documento Listo' : isSkipped ? 'Excluido' : 'Pendiente'}
-                </span>
+                <div className="flex items-center gap-2">
+                    <PersonaTag name={doc.req?.nombre_persona} role={doc.req?.rol_persona} isSkipped={isSkipped} />
+                    {!doc.req?.nombre_persona && (
+                        <span className="text-[10px] font-black tracking-widest uppercase text-slate-400">
+                            {isUploaded ? 'Documento Listo' : isSkipped ? 'Excluido' : 'Pendiente'}
+                        </span>
+                    )}
+                </div>
 
                 <div className="flex gap-2">
                     {!isUploaded && !isSkipped && (
@@ -274,32 +369,20 @@ const Stage3UploadCard = ({ docId, req, docState, onUpload, onSkip, isSubmitting
                 <div className="flex-1">
                     <div className="flex justify-between items-start">
                         <div className="flex-1">
-                            <h3 className={`font-bold text-lg leading-tight transition-all ${isSkipped ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
+                            <h3 className={`font-bold text-lg leading-tight transition-all mb-1 ${isSkipped ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
                                 {req.nombre_documento || req.tipo_documento}
                             </h3>
-                            {/* Identificadores del documento */}
-                            {(req.propiedad_fojas || req.propiedad_numero || req.propiedad_anio || req.doc_repertorio || req.doc_resolucion || req.doc_rol || req.doc_plano) && (
-                                <div className={`mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-medium ${isSkipped ? 'text-slate-300' : 'text-blue-600'}`}>
-                                    {req.propiedad_fojas && <span>Fjs: {req.propiedad_fojas}</span>}
-                                    {req.propiedad_numero && <span>N°: {req.propiedad_numero}</span>}
-                                    {req.propiedad_anio && <span>Año: {req.propiedad_anio}</span>}
-                                    {req.propiedad_comuna && <span className="text-slate-500">• {req.propiedad_comuna}</span>}
-                                    {req.doc_repertorio && <span>Rep: {req.doc_repertorio}</span>}
-                                    {req.doc_resolucion && <span>Res: {req.doc_resolucion}</span>}
-                                    {req.doc_rol && <span>Rol: {req.doc_rol}</span>}
-                                    {req.doc_plano && <span>Plano: {req.doc_plano}</span>}
-                                </div>
-                            )}
-                            {isSkipped && <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100 inline-block mt-1">EXCLUIDO</span>}
+                            <MetadataBlock req={req} isSkipped={isSkipped} />
+                            {isSkipped && <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100 inline-block mt-2">EXCLUIDO</span>}
                         </div>
-                        {isUploaded && <CheckCircle className="text-green-500" size={24} />}
+                        {isUploaded && <CheckCircle className="text-green-500 shrink-0" size={24} />}
                     </div>
 
-                    {req.detalle && <p className={`text-sm mt-2 italic border-l-2 pl-3 ${isSkipped ? 'text-slate-300 border-slate-100' : 'text-slate-500 border-slate-200'}`}>{req.detalle}</p>}
+                    {req.detalle && <p className={`text-sm mt-3 italic border-l-2 pl-3 py-0.5 ${isSkipped ? 'text-slate-300 border-slate-100' : 'text-slate-500 border-slate-200 bg-slate-50/50 rounded-r-lg'}`}>{req.detalle}</p>}
 
                     <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-100">
                         <div className="flex items-center gap-2">
-                            {req.nombre_persona && <span className="text-xs font-semibold text-slate-600 truncate max-w-[150px]"><User size={12} className="inline mr-1" />{req.nombre_persona}</span>}
+                            <PersonaTag name={req.nombre_persona} role={req.rol_persona} isSkipped={isSkipped} />
                         </div>
 
                         <div className="flex gap-2">
@@ -333,6 +416,51 @@ const Stage3UploadCard = ({ docId, req, docState, onUpload, onSkip, isSubmitting
             </div>
         </div>
     );
+};
+
+// --- Deduplication Helper ---
+const getDeduplicationKey = (req) => {
+    // Helper to normalize strings
+    const normalize = (s) => s ? String(s).toLowerCase().trim() : '';
+
+    if (!req) return null;
+
+    const type = normalize(req.tipo_documento || req.nombre_documento);
+    const person = normalize(req.nombre_persona);
+
+    // 1. Property Documents (Strongest signal: Fojas + Numero + Año)
+    if (req.propiedad_fojas && req.propiedad_numero && req.propiedad_anio) {
+        return `prop_${normalize(req.propiedad_fojas)}_${normalize(req.propiedad_numero)}_${normalize(req.propiedad_anio)}`;
+    }
+
+    // 2. Plano (comparing only digits as per user request)
+    if (req.doc_plano) {
+        const digits = req.doc_plano.replace(/\D/g, '');
+        if (digits.length >= 2) {
+            return `plano_${digits}`;
+        }
+    }
+
+    // 3. Declaracion de Solteria
+    if (type.includes('solteria') && person) {
+        return `solteria_${person}`;
+    }
+
+    // 4. Personal Documents (Cedula/Matrimonio/Etc + Person Name)
+    if (person) {
+        if (type.includes('cedula') || type.includes('identidad')) return `cedula_${person}`;
+        if (type.includes('matrimonio')) return `matrimonio_${person}`;
+        if (type.includes('nacimiento')) return `nacimiento_${person}`;
+        if (type.includes('defuncion')) return `defuncion_${person}`;
+    }
+
+    // 5. Same Name + Same Date
+    if (req.nombre_documento && req.doc_fecha) {
+        return `namedate_${normalize(req.nombre_documento)}_${normalize(req.doc_fecha)}`;
+    }
+
+    // Fallback: If it doesn't match specific deduplication rules, we use its ID to ensure it is NOT hidden.
+    return `unique_${req.id}`;
 };
 
 // --- Main Study Page Component ---
@@ -414,12 +542,13 @@ export default function StudyPage() {
                 // If we have S2 docs in DB, reconstruct requiredDocs
                 if (s2Reqs.length > 0) {
                     const reconstructedDocs = s2Reqs.map(r => ({
-                        id: r.tipo_documento || r.nombre_documento, // Fallback to name if tipo is missing
+                        id: r.tipo_documento || r.nombre_documento,
                         label: r.nombre_documento,
                         description: r.detalle || '',
-                        category: r.tipo_documento ? 'legal' : 'otro', // Simplified category
+                        category: r.tipo_documento ? 'legal' : 'otro',
                         icon: r.tipo_documento?.includes('dominio') ? FileCheck : (r.tipo_documento?.includes('gp') ? ShieldCheck : Scroll),
-                        dbId: r.id
+                        dbId: r.id,
+                        req: r
                     }));
                     setRequiredDocs(reconstructedDocs);
                 }
@@ -533,7 +662,58 @@ export default function StudyPage() {
         };
     }, [operationId]);
 
-    const totalDocs = requiredDocs.length + stage2Requests.length + stage3Requests.length + stage4Requests.length;
+
+
+
+    // --- Deduplication Logic ---
+    const visibleStage3Requests = useMemo(() => {
+        const seenKeys = new Set();
+
+        // Add keys from Phase 2 (requiredDocs) to seen set
+        // Note: structured req object is inside doc.req
+        requiredDocs.forEach(doc => {
+            const key = getDeduplicationKey(doc.req);
+            if (key && !key.startsWith('unique_')) seenKeys.add(key);
+        });
+
+        return stage3Requests.filter(req => {
+            if (req.repetido) return false;
+            const key = getDeduplicationKey(req);
+            // If it's a unique ID, always show. If it's a dedup key, check if seen.
+            if (key && !key.startsWith('unique_')) {
+                if (seenKeys.has(key)) return false;
+                seenKeys.add(key);
+            }
+            return true;
+        });
+    }, [stage3Requests, requiredDocs]);
+
+    const visibleStage4Requests = useMemo(() => {
+        const seenKeys = new Set();
+
+        // Add keys from Phase 2 & 3 to seen set for Phase 4 (though unlikely to overlap phase 2/3 with 4)
+        requiredDocs.forEach(doc => {
+            const key = getDeduplicationKey(doc.req);
+            if (key && !key.startsWith('unique_')) seenKeys.add(key);
+        });
+        visibleStage3Requests.forEach(req => {
+            const key = getDeduplicationKey(req);
+            if (key && !key.startsWith('unique_')) seenKeys.add(key);
+        });
+
+        return stage4Requests.filter(req => {
+            if (req.repetido) return false;
+            const key = getDeduplicationKey(req);
+            if (key && !key.startsWith('unique_')) {
+                if (seenKeys.has(key)) return false;
+                seenKeys.add(key);
+            }
+            return true;
+        });
+    }, [stage4Requests, visibleStage3Requests, requiredDocs]);
+
+
+    const totalDocs = requiredDocs.length + stage2Requests.length + visibleStage3Requests.length + visibleStage4Requests.length;
     const completedCount = Object.values(docStates).filter(s => s.status === 'uploaded' || s.status === 'skipped').length;
 
     const handleUpload = (docId, file) => {
@@ -707,10 +887,10 @@ export default function StudyPage() {
                 // MODIFIED: Process all documents regardless of phase
                 /*
                 if (state.stage !== currentStep) {
-                    console.log(`Skipping doc ${key} because it belongs to phase ${state.stage} (current: ${currentStep})`);
-                    continue;
+                console.log(`Skipping doc ${key} because it belongs to phase ${state.stage} (current: ${currentStep})`);
+            continue;
                 }
-                */
+            */
                 console.log(`Processing file for ${key}: ${state.file.name}`);
                 const file = state.file;
                 const extension = file.name.split('.').pop();
@@ -827,7 +1007,7 @@ export default function StudyPage() {
             // 3. Sequential Submission
             for (let i = 0; i < priorityDocs.length; i++) {
                 const doc = priorityDocs[i];
-                const cleanName = doc.table || 'documento';
+                const cleanName = doc.dbType || doc.table || 'documento';
 
                 toast.loading(`Enviando (${i + 1}/${priorityDocs.length}): ${cleanName}...`, { id: toastId });
 
@@ -973,8 +1153,9 @@ export default function StudyPage() {
                         <p className="text-slate-500">
                             {currentStep === 1 ? 'Paso 1: Configuración de la propiedad' :
                                 currentStep === 2 ? 'Paso 2: Carga de documentos' :
-                                    currentStep === 3 ? (stage3Requests.some(r => r.estado !== 'Completado') ? 'Paso 3: Carga de antecedentes adicionales' : 'Paso 3: Revisión del estudio') :
-                                        (stage4Requests.some(r => r.estado !== 'Completado') ? 'Paso 4: Documentación final (Identidad y Estado Civil)' : 'Paso 4: Revisión final')}
+                                    currentStep === 2 ? 'Paso 2: Carga de documentos' :
+                                        currentStep === 3 ? (visibleStage3Requests.some(r => r.estado !== 'Completado') ? 'Paso 3: Carga de antecedentes adicionales' : 'Paso 3: Revisión del estudio') :
+                                            (visibleStage4Requests.some(r => r.estado !== 'Completado') ? 'Paso 4: Documentación final (Identidad y Estado Civil)' : 'Paso 4: Revisión final')}
                         </p>
                     </div>
                     {currentStep === 2 && (
@@ -993,8 +1174,9 @@ export default function StudyPage() {
                     currentStep={currentStep}
                     progress={completedCount}
                     total={totalDocs}
-                    stage3Requests={stage3Requests}
-                    stage4Requests={stage4Requests}
+
+                    stage3Requests={visibleStage3Requests}
+                    stage4Requests={visibleStage4Requests}
                 />
 
                 {currentStep === 1 ? (
@@ -1113,7 +1295,7 @@ export default function StudyPage() {
 
                         {/* SECTION 2: Titles/Gravamens (Phase 3 Origin) */}
                         {(() => {
-                            const propertyDocs = stage3Requests.filter(req =>
+                            const propertyDocs = visibleStage3Requests.filter(req =>
                                 ['titulos', 'legal', 'escritura_cv', 'inscripcion_anterior', 'posesion_efectiva', 'hipoteca', 'gp', 'inscripcion_herencia', 'herencia'].includes(req.tipo_documento?.toLowerCase()) ||
                                 req.origen_solicitud === 'propiedad'
                             );
@@ -1142,7 +1324,7 @@ export default function StudyPage() {
 
                         {/* SECTION 3: Personal/Other (Phase 3 Origin) */}
                         {(() => {
-                            const personalDocs = stage3Requests.filter(req =>
+                            const personalDocs = visibleStage3Requests.filter(req =>
                                 !['titulos', 'legal', 'escritura_cv', 'inscripcion_anterior', 'posesion_efectiva', 'hipoteca', 'gp'].includes(req.tipo_documento?.toLowerCase()) &&
                                 req.origen_solicitud !== 'propiedad'
                             );
@@ -1170,13 +1352,13 @@ export default function StudyPage() {
                         })()}
 
                         {/* SECTION 4: Identity (Phase 4 Origin) */}
-                        {stage4Requests.length > 0 && (
+                        {visibleStage4Requests.length > 0 && (
                             <div className="mb-12 animate-in fade-in slide-in-from-bottom-2">
                                 <h3 className="text-sm font-bold text-indigo-800 uppercase mb-4 tracking-wider flex items-center gap-2">
                                     <User size={16} /> Antecedentes de los Comparecientes
                                 </h3>
                                 <div className="space-y-3">
-                                    {stage4Requests.map(req => (
+                                    {visibleStage4Requests.map(req => (
                                         <Stage3UploadCard
                                             key={`s4_${req.id}`}
                                             docId={`s4_${req.id}`}
