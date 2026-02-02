@@ -174,7 +174,7 @@ const DOC_CATALOG = {
     },
     GASTO_COMUN: {
         id: 'gasto_comun',
-        label: 'Certificado de Deuda Gasto Común',
+        label: 'Certificado de Deuda de Gastos Comunes',
         description: 'Certificado emitido por la administración del condominio.',
         icon: Building,
         category: 'especial'
@@ -210,6 +210,7 @@ export function generateRequiredDocuments(formData) {
     if (formData.hasReglamento) {
         docs.push(DOC_CATALOG.REGLAMENTO_COPROPIEDAD);
         docs.push(DOC_CATALOG.GASTO_COMUN);
+        docs.push(DOC_CATALOG.PLANO_COPROPIEDAD);
     }
 
     // Dinámicos: Una solicitud de inscripción por cada unidad indicada (si es > 1)
