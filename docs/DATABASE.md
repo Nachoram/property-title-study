@@ -72,7 +72,7 @@ Información de perfil del sistema.
 
 El sistema utiliza tablas específicas para cada tipo de documento para almacenar los datos extraídos mediante IA/OCR. Todas las tablas `ocr_` contienen un set de **Columnas de Trazabilidad Comunes**:
 
-- `estudio_id`, `operacion_id`, `documento_url`, `nombre_archivo`, `user_id`, `estado`.
+- `estudio_id`, `operacion_id`, `documento_url`, `nombre_archivo`, `nombre_documento_ocr`, `user_id`, `estado`.
 
 ### Tablas Específicas y sus Columnas Extra:
 
@@ -142,6 +142,12 @@ El sistema utiliza tablas específicas para cada tipo de documento para almacena
 - `titulo_anterior`: Referencia a la inscripción previa.
 - `declaracion_pago_total`: BOOLEAN. Indica si el precio está totalmente pagado.
 - `renuncia_accion_resolutoria`: BOOLEAN. Indica si las partes renuncian a resolver el contrato por no pago.
+- `se_constituye_gravamen`: BOOLEAN. Indica si se constituye un gravamen en la escritura.
+- `tipos_gravamen_detectados`: JSONB. Arreglo con los tipos de gravámenes detectados (ej: SERVIDUMBRE, PROHIBICION).
+- `transcripcion_clausula_gravamen`: TEXT. Texto literal de la cláusula de gravamen.
+- `acreedor_o_beneficiario_gravamen`: TEXT. Acreedor o beneficiario del gravamen constituido.
+- `saneamientos_y_rectificaciones`: JSONB. Arreglo de objetos con hallazgos de saneamiento y sus datos de escritura.
+- `poderes_de_saneamiento`: JSONB. Arreglo de objetos con los mandantes, mandatarios y facultades de saneamiento.
 
 #### `ocr_cedula_identidad` (Cédula de Identidad)
 - `rut`, `nombres`, `apellidos`: Datos de identificación de la persona.
@@ -265,6 +271,14 @@ El sistema utiliza tablas específicas para cada tipo de documento para almacena
 - `poderes_conferidos`: JSONB con los apoderados, formas de actuación y limitaciones.
 - `puede_vender`, `puede_hipotecar`, `puede_percibir`, `puede_autocontratar`: Facultades inmobiliarias clave.
 - `limitaciones_texto`: Descripción textual de las limitaciones encontradas.
+- `documentos_url`: Enlaces a los documentos originales del acta o sesión.
+
+#### `estudio_documentos_aislados`
+- `tipo_documento`: Nombre o tipo del certificado (ej: Certificado de No Expropiación).
+- `estado_revision`: Estado del hallazgo (ej: LIMPIO, HALLAZGO).
+- `texto_hallazgo`: Transcripción del texto relevante encontrado.
+- `analisis_detalle`: Análisis jurídico o técnico del documento.
+- `institucion`: Entidad que emite el documento.
 
 
 ---

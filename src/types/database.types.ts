@@ -624,6 +624,7 @@ export type Database = {
                     created_at: string | null
                     doc_id_origen: string | null
                     document_url: string | null
+                    documentos_url: string | null
                     enviado: boolean | null
                     estudio_id: string | null
                     fase: number | null
@@ -656,6 +657,7 @@ export type Database = {
                     created_at?: string | null
                     doc_id_origen?: string | null
                     document_url?: string | null
+                    documentos_url?: string | null
                     enviado?: boolean | null
                     estudio_id?: string | null
                     fase?: number | null
@@ -688,6 +690,7 @@ export type Database = {
                     created_at?: string | null
                     doc_id_origen?: string | null
                     document_url?: string | null
+                    documentos_url?: string | null
                     enviado?: boolean | null
                     estudio_id?: string | null
                     fase?: number | null
@@ -806,6 +809,12 @@ export type Database = {
                     renuncia_accion_resolutoria: boolean | null
                     user_id: string | null
                     verificado: boolean | null
+                    se_constituye_gravamen: boolean | null
+                    tipos_gravamen_detectados: Json | null
+                    transcripcion_clausula_gravamen: string | null
+                    acreedor_o_beneficiario_gravamen: string | null
+                    saneamientos_y_rectificaciones: Json | null
+                    poderes_de_saneamiento: Json | null
                 }
                 Insert: {
                     completado?: boolean | null
@@ -820,6 +829,12 @@ export type Database = {
                     renuncia_accion_resolutoria?: boolean | null
                     user_id?: string | null
                     verificado?: boolean | null
+                    se_constituye_gravamen?: boolean | null
+                    tipos_gravamen_detectados?: Json | null
+                    transcripcion_clausula_gravamen?: string | null
+                    acreedor_o_beneficiario_gravamen?: string | null
+                    saneamientos_y_rectificaciones?: Json | null
+                    poderes_de_saneamiento?: Json | null
                 }
                 Update: {
                     completado?: boolean | null
@@ -834,6 +849,12 @@ export type Database = {
                     renuncia_accion_resolutoria?: boolean | null
                     user_id?: string | null
                     verificado?: boolean | null
+                    se_constituye_gravamen?: boolean | null
+                    tipos_gravamen_detectados?: Json | null
+                    transcripcion_clausula_gravamen?: string | null
+                    acreedor_o_beneficiario_gravamen?: string | null
+                    saneamientos_y_rectificaciones?: Json | null
+                    poderes_de_saneamiento?: Json | null
                 }
                 Relationships: [
                     {
@@ -2293,6 +2314,53 @@ export type Database = {
                 Relationships: [
                     {
                         foreignKeyName: "solicitud_documentos_estudio_id_fkey"
+                        columns: ["estudio_id"]
+                        isOneToOne: false
+                        referencedRelation: "estudios_titulos"
+                        referencedColumns: ["id"]
+                    },
+                ]
+            }
+            estudio_documentos_aislados: {
+                Row: {
+                    analisis_detalle: string | null
+                    created_at: string | null
+                    estado_revision: string | null
+                    estudio_id: string | null
+                    id: string
+                    institucion: string | null
+                    texto_hallazgo: string | null
+                    tipo_documento: string | null
+                    updated_at: string | null
+                    user_id: string | null
+                }
+                Insert: {
+                    analisis_detalle?: string | null
+                    created_at?: string | null
+                    estado_revision?: string | null
+                    estudio_id?: string | null
+                    id?: string
+                    institucion?: string | null
+                    texto_hallazgo?: string | null
+                    tipo_documento?: string | null
+                    updated_at?: string | null
+                    user_id?: string | null
+                }
+                Update: {
+                    analisis_detalle?: string | null
+                    created_at?: string | null
+                    estado_revision?: string | null
+                    estudio_id?: string | null
+                    id?: string
+                    institucion?: string | null
+                    texto_hallazgo?: string | null
+                    tipo_documento?: string | null
+                    updated_at?: string | null
+                    user_id?: string | null
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "estudio_documentos_aislados_estudio_id_fkey"
                         columns: ["estudio_id"]
                         isOneToOne: false
                         referencedRelation: "estudios_titulos"
