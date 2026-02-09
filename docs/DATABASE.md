@@ -72,16 +72,23 @@ Información de perfil del sistema.
 
 El sistema utiliza tablas específicas para cada tipo de documento para almacenar los datos extraídos mediante IA/OCR. Todas las tablas `ocr_` contienen un set de **Columnas de Trazabilidad Comunes**:
 
-- `estudio_id`, `operacion_id`, `documento_url`, `nombre_archivo`, `nombre_documento_ocr`, `user_id`, `estado`.
+- `estudio_id`, `operacion_id`, `documento_url`, `nombre_archivo`, `nombre_documento_ocr`, `user_id`, `estado`, `fecha_emision`, `porcentaje_manuscrito`, `corresponde_a_propiedad_en_estudio`, `riesgo_fraude`, `institucion_emisora`.
 
 ### Tablas Específicas y sus Columnas Extra:
 
 #### `ocr_dominio_vigente`
 - `fojas`, `numero`, `anio`: Datos de inscripción en el CBR.
 - `comuna`: Ubicación de la propiedad.
-- `cbr`: Conservador de Bienes Raíces correspondiente.
-- `titulares`: Nombres de los dueños actuales.
-- `deslindes`: Descripción de límites de la propiedad.
+- `cbr`: Conservador de Bienes Raíces correspondiente (alias de conservador).
+- `es_vigente`: BOOLEAN. Indica si el título está vigente al momento de la certificación.
+- `fecha_certificacion`: TEXT. Fecha del certificado de vigencia.
+- `tipo_documento_vigencia`: TEXT. Tipo de documento de vigencia (ej: COPIA_VIGENTE).
+- `inmueble_direccion`, `inmueble_comuna`, `inmueble_rol_avaluo`, `inmueble_deslindes_texto`: Detalles del inmueble.
+- `propietarios_actuales`: JSONB. Arreglo con nombres, RUTs y derechos.
+- `propietarios_anteriores`: JSONB. Arreglo con datos de dueños previos.
+- `titulo_fundante`: JSONB. Datos de la escritura o acto que originó la inscripción.
+- `titulos_anteriores`: JSONB. Referencias registrales previas.
+- `notas_marginales`: JSONB. Arreglo con las subinscripciones y notas al margen.
 
 #### `ocr_gp` (Gravámenes y Prohibiciones)
 - `tipo_gp`: Indica si es de Hipotecas o de Interdicciones.
@@ -134,6 +141,7 @@ El sistema utiliza tablas específicas para cada tipo de documento para almacena
 
 #### `ocr_escritura_cv` (Escritura de Compraventa)
 - `notaria`, `fecha_escritura`, `repertorio`: Datos de otorgamiento.
+- `codigo_kardex`: TEXT. Código de identificación interna del documento (ej: CV_4B3GA9...).
 - `precio_monto`, `precio_moneda`, `forma_pago`: Detalles económicos.
 - `partes_comparecientes`: JSONB con datos de vendedores y compradores.
 - `direccion_objeto`, `comuna_objeto`, `rol_avaluo`: Identificación de la propiedad.
@@ -163,6 +171,8 @@ El sistema utiliza tablas específicas para cada tipo de documento para almacena
 - `especial_herencia_fojas`, `especial_herencia_numero`, `especial_herencia_anio`: Datos de la inscripción de herencia.
 - `nuevos_duenos`: JSONB con la lista de herederos que inscriben.
 - `propiedad_direccion`, `propiedad_comuna`, `propiedad_rol_avaluo`: Datos de la propiedad heredada.
+- `porcentaje_manuscrito`: NUMERIC. Porcentaje de texto manuscrito detectado.
+- `riesgo_fraude`: TEXT. Evaluación cualitativa de riesgo de fraude o discrepancia.
 
 #### `ocr_constitucion_sociedad`
 - `nombre_archivo`, `documento_url`: Trazabilidad.
