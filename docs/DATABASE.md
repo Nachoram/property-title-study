@@ -134,10 +134,12 @@ El sistema utiliza tablas específicas para cada tipo de documento para almacena
 - `naturaleza_acto`: TEXT (ej: DIVISION_DE_SOCIEDAD, APORTE_CAPITAL).
 - `organo_administracion`, `forma_actuacion`: Detalles de la administración.
 - `administradores_designados`: JSONB (Array) con nombres y ruts.
-- `facultad_vender`, `facultad_hipotecar`, `facultad_enajenar`: Booleans indicando poderes clave.
-- `individualizacion_aporte`: JSONB con la causa y valor total.
 - `lista_inmuebles_aportados`: JSONB (Array) con el detalle de cada propiedad.
 - `analisis_validez`: JSONB con verificaciones legales.
+- `porcentaje_manuscrito`: NUMERIC. Porcentaje de texto manuscrito detectado.
+- `corresponde_a_propiedad_en_estudio`: BOOLEAN. Indica si el documento corresponde a la propiedad.
+- `riesgo_fraude`: TEXT. Evaluación de riesgo de fraude.
+- `institucion_emisora`: TEXT. Nombre de la notaría o institución emisora.
 
 #### `ocr_escritura_cv` (Escritura de Compraventa)
 - `notaria`, `fecha_escritura`, `repertorio`: Datos de otorgamiento.
@@ -256,8 +258,7 @@ El sistema utiliza tablas específicas para cada tipo de documento para almacena
 - `clasificacion_poder`: Tipo de poder (ESPECIAL, GENERAL, etc.).
 - `mandantes`, `mandatarios`: JSONB con los datos de las partes (Nombre, RUT, etc.).
 - `forma_actuacion_mandatarios`: Cómo deben actuar (INDIVIDUAL, CONJUNTA, etc.).
-- `inmueble_direccion`, `inmueble_comuna`, `inmueble_fojas`, `inmueble_numero`, `inmueble_anio`, `inmueble_conservador`: Datos del inmueble específico si aplica.
-- `inmueble_deslindes`: Texto con los límites de la propiedad.
+- `inmueble_especifico`: JSONB (Array) con los datos de los inmuebles específicos (Dirección, Comuna, Fojas, Número, Año, Conservador, Deslindes).
 - `puede_vender`, `puede_percibir`, `puede_hipotecar`, `puede_autocontratar`: Booleans con facultades clave.
 - `vigencia_texto`: Texto explicativo sobre la vigencia del poder.
 

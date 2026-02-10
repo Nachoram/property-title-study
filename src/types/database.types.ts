@@ -1131,19 +1131,17 @@ export type Database = {
           administradores_designados: Json | null
           analisis_validez: Json | null
           completado: boolean | null
+          corresponde_a_propiedad_en_estudio: boolean | null
           created_at: string | null
           documento_url: string | null
           enviado: boolean | null
           estudio_id: string | null
-          facultad_enajenar: boolean | null
-          facultad_hipotecar: boolean | null
-          facultad_vender: boolean | null
           fecha_emision: string | null
           fecha_escritura: string | null
           forma_actuacion: string | null
           id: string
           identificacion_aportante_naturaleza: Json | null
-          individualizacion_aporte: Json | null
+          institucion_emisora: string | null
           lista_inmuebles_aportados: Json | null
           malla_societaria: Json | null
           naturaleza_acto: string | null
@@ -1151,7 +1149,9 @@ export type Database = {
           notaria: string | null
           numero_operacion: string | null
           organo_administracion: string | null
+          porcentaje_manuscrito: number | null
           repertorio: string | null
+          riesgo_fraude: string | null
           sociedad_adquirente: Json | null
           updated_at: string | null
           user_id: string | null
@@ -1161,19 +1161,17 @@ export type Database = {
           administradores_designados?: Json | null
           analisis_validez?: Json | null
           completado?: boolean | null
+          corresponde_a_propiedad_en_estudio?: boolean | null
           created_at?: string | null
           documento_url?: string | null
           enviado?: boolean | null
           estudio_id?: string | null
-          facultad_enajenar?: boolean | null
-          facultad_hipotecar?: boolean | null
-          facultad_vender?: boolean | null
           fecha_emision?: string | null
           fecha_escritura?: string | null
           forma_actuacion?: string | null
           id?: string
           identificacion_aportante_naturaleza?: Json | null
-          individualizacion_aporte?: Json | null
+          institucion_emisora?: string | null
           lista_inmuebles_aportados?: Json | null
           malla_societaria?: Json | null
           naturaleza_acto?: string | null
@@ -1181,7 +1179,9 @@ export type Database = {
           notaria?: string | null
           numero_operacion?: string | null
           organo_administracion?: string | null
+          porcentaje_manuscrito?: number | null
           repertorio?: string | null
+          riesgo_fraude?: string | null
           sociedad_adquirente?: Json | null
           updated_at?: string | null
           user_id?: string | null
@@ -1191,19 +1191,17 @@ export type Database = {
           administradores_designados?: Json | null
           analisis_validez?: Json | null
           completado?: boolean | null
+          corresponde_a_propiedad_en_estudio?: boolean | null
           created_at?: string | null
           documento_url?: string | null
           enviado?: boolean | null
           estudio_id?: string | null
-          facultad_enajenar?: boolean | null
-          facultad_hipotecar?: boolean | null
-          facultad_vender?: boolean | null
           fecha_emision?: string | null
           fecha_escritura?: string | null
           forma_actuacion?: string | null
           id?: string
           identificacion_aportante_naturaleza?: Json | null
-          individualizacion_aporte?: Json | null
+          institucion_emisora?: string | null
           lista_inmuebles_aportados?: Json | null
           malla_societaria?: Json | null
           naturaleza_acto?: string | null
@@ -1211,7 +1209,9 @@ export type Database = {
           notaria?: string | null
           numero_operacion?: string | null
           organo_administracion?: string | null
+          porcentaje_manuscrito?: number | null
           repertorio?: string | null
+          riesgo_fraude?: string | null
           sociedad_adquirente?: Json | null
           updated_at?: string | null
           user_id?: string | null
@@ -2634,13 +2634,7 @@ export type Database = {
           fecha_escritura: string | null
           forma_actuacion_mandatarios: string | null
           id: string
-          inmueble_anio: string | null
-          inmueble_comuna: string | null
-          inmueble_conservador: string | null
-          inmueble_deslindes: string | null
-          inmueble_direccion: string | null
-          inmueble_fojas: string | null
-          inmueble_numero: string | null
+          inmueble_especifico: Json | null
           institucion_emisora: string | null
           mandantes: Json | null
           mandatarios: Json | null
@@ -2675,13 +2669,7 @@ export type Database = {
           fecha_escritura?: string | null
           forma_actuacion_mandatarios?: string | null
           id?: string
-          inmueble_anio?: string | null
-          inmueble_comuna?: string | null
-          inmueble_conservador?: string | null
-          inmueble_deslindes?: string | null
-          inmueble_direccion?: string | null
-          inmueble_fojas?: string | null
-          inmueble_numero?: string | null
+          inmueble_especifico?: Json | null
           institucion_emisora?: string | null
           mandantes?: Json | null
           mandatarios?: Json | null
@@ -2716,13 +2704,7 @@ export type Database = {
           fecha_escritura?: string | null
           forma_actuacion_mandatarios?: string | null
           id?: string
-          inmueble_anio?: string | null
-          inmueble_comuna?: string | null
-          inmueble_conservador?: string | null
-          inmueble_deslindes?: string | null
-          inmueble_direccion?: string | null
-          inmueble_fojas?: string | null
-          inmueble_numero?: string | null
+          inmueble_especifico?: Json | null
           institucion_emisora?: string | null
           mandantes?: Json | null
           mandatarios?: Json | null

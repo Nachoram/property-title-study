@@ -1,0 +1,162 @@
+﻿        }
+        Update: {
+          completado?: boolean | null
+          created_at?: string | null
+          doc_id_origen?: string | null
+          enviado?: boolean | null
+          estudio_id?: string | null
+          fecha_emision?: string | null
+          fecha_escritura?: string | null
+          id?: string
+          insinuacion?: boolean | null
+          nombre_documento_ocr?: string | null
+          notaria?: string | null
+          numero_operacion?: string | null
+          porcentaje_manuscrito?: number | null
+          riesgo_fraude?: string | null
+          user_id?: string
+          verificacion_titulo_contenido?: string | null
+          verificado?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_donacion_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_escritura_constitucion_aporte: {
+        Row: {
+          administradores_designados: Json | null
+          analisis_validez: Json | null
+          completado: boolean | null
+          corresponde_a_propiedad_en_estudio: boolean | null
+          created_at: string | null
+          documento_url: string | null
+          enviado: boolean | null
+          estudio_id: string | null
+          facultad_enajenar: boolean | null
+          facultad_hipotecar: boolean | null
+          facultad_vender: boolean | null
+          fecha_emision: string | null
+          fecha_escritura: string | null
+          forma_actuacion: string | null
+          id: string
+          identificacion_aportante_naturaleza: Json | null
+          individualizacion_aporte: Json | null
+          lista_inmuebles_aportados: Json | null
+          malla_societaria: Json | null
+          naturaleza_acto: string | null
+          nombre_documento_ocr: string | null
+          notaria: string | null
+          numero_operacion: string | null
+          organo_administracion: string | null
+          porcentaje_manuscrito: number | null
+          repertorio: string | null
+          riesgo_fraude: string | null
+          sociedad_adquirente: Json | null
+          updated_at: string | null
+          user_id: string | null
+          verificado: boolean | null
+        }
+        Insert: {
+          administradores_designados?: Json | null
+          analisis_validez?: Json | null
+          completado?: boolean | null
+          created_at?: string | null
+          documento_url?: string | null
+          enviado?: boolean | null
+          estudio_id?: string | null
+          facultad_enajenar?: boolean | null
+          facultad_hipotecar?: boolean | null
+          facultad_vender?: boolean | null
+          fecha_emision?: string | null
+          fecha_escritura?: string | null
+          forma_actuacion?: string | null
+          id?: string
+          identificacion_aportante_naturaleza?: Json | null
+          individualizacion_aporte?: Json | null
+          analisis_validez?: Json | null
+          completado?: boolean | null
+          created_at?: string | null
+          documento_url?: string | null
+          enviado?: boolean | null
+          estudio_id?: string | null
+          facultad_enajenar?: boolean | null
+          facultad_hipotecar?: boolean | null
+          facultad_vender?: boolean | null
+          fecha_emision?: string | null
+          fecha_escritura?: string | null
+          forma_actuacion?: string | null
+          id?: string
+          identificacion_aportante_naturaleza?: Json | null
+          individualizacion_aporte?: Json | null
+          lista_inmuebles_aportados?: Json | null
+          malla_societaria?: Json | null
+          naturaleza_acto?: string | null
+          nombre_documento_ocr?: string | null
+          notaria?: string | null
+          numero_operacion?: string | null
+          organo_administracion?: string | null
+          repertorio?: string | null
+          sociedad_adquirente?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+          verificado?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_escritura_constitucion_aporte_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_escritura_cv: {
+        Row: {
+          acreedor_o_beneficiario_gravamen: string | null
+          codigo_kardex: string | null
+          completado: boolean | null
+          comuna_objeto: string | null
+          corresponde_a_propiedad_en_estudio: boolean | null
+          created_at: string | null
+          declaracion_pago_total: boolean | null
+          deslindes: string | null
+          direccion_objeto: string | null
+          documento_url: string | null
+          enviado: boolean | null
+          estado: string | null
+          estudio_id: string | null
+          fecha_emision: string | null
+          fecha_escritura: string | null
+          forma_pago: string | null
+          id: string
+          institucion_emisora: string | null
+          nombre_documento_ocr: string | null
+          notaria: string | null
+          numero_operacion: string | null
+          partes_comparecientes: Json | null
+          poderes_de_saneamiento: Json | null
+          porcentaje_manuscrito: number | null
+          precio_moneda: string | null
+          precio_monto: string | null
+          precio_venta_texto: string | null
+          renuncia_accion_resolutoria: boolean | null
+          repertorio: string | null
+          riesgo_fraude: string | null
+          rol_avaluo: string | null
+          saneamientos_y_rectificaciones: Json | null
+          se_constituye_gravamen: boolean | null
+          tipos_gravamen_detectados: Json | null
+          titulo_anterior: string | null
+          transcripcion_clausula_gravamen: string | null
+          user_id: string
+          verificacion_titulo_contenido: string | null
+          verificado: boolean | null
+        }
+        Insert: {
