@@ -178,6 +178,27 @@ const DOC_CATALOG = {
         description: 'Certificado emitido por la administración del condominio.',
         icon: Building,
         category: 'especial'
+    },
+    ESCRITURA_RECILIACION: {
+        id: 'escritura_reciliacion',
+        label: 'Escritura Pública de Reciliación',
+        description: 'Documento que deja sin efecto un contrato anterior por mutuo acuerdo.',
+        icon: Scroll,
+        category: 'titulos'
+    },
+    ESCRITURA_SANEAMIENTO: {
+        id: 'escritura_saneamiento',
+        label: 'Escritura Pública de Saneamiento',
+        description: 'Documento destinado a corregir vicios formales en títulos anteriores.',
+        icon: ShieldCheck,
+        category: 'titulos'
+    },
+    ESCRITURA_ARRENDAMIENTO: {
+        id: 'escritura_arrendamiento',
+        label: 'Escritura Pública de Arrendamiento',
+        description: 'Contrato de alquiler de la propiedad otorgado ante notario.',
+        icon: Scroll,
+        category: 'titulos'
     }
 };
 
