@@ -1,47 +1,47 @@
--- Migration: Standardize all OCR tables
+-- Migration: Standardize all OCR tables (REFINED)
 -- Date: 2026-02-11
--- Description: Updates all tables starting with 'ocr_' to retain only whitelisted columns
---              and adds three standard JSONB columns: texto_estructurado, analisis_integridad, extraccion_datos.
+-- Description: Ensures all OCR tables have the 9 standard columns and NO others.
 
 DO $$
 DECLARE
     r RECORD;
     t text;
+    col text;
+    whitelisted_cols text[] := ARRAY[
+        'id', 'user_id', 'estudio_id', 'documento_url', 'numero_operacion', 
+        'nombre_documento_ocr', 'texto_estructurado', 'analisis_integridad', 'extraccion_datos'
+    ];
 BEGIN
-    -- 1. Add new standard columns to all OCR tables if they don't exist
+    -- 1. Ensure all whitelisted columns exist in all OCR tables
     FOR t IN
         SELECT table_name
         FROM information_schema.tables
         WHERE table_schema = 'public'
           AND table_name LIKE 'ocr_%'
     LOOP
+        -- Add missing columns with appropriate types
+        EXECUTE 'ALTER TABLE ' || quote_ident(t) || ' ADD COLUMN IF NOT EXISTS id UUID DEFAULT gen_random_uuid()';
+        EXECUTE 'ALTER TABLE ' || quote_ident(t) || ' ADD COLUMN IF NOT EXISTS user_id UUID';
+        EXECUTE 'ALTER TABLE ' || quote_ident(t) || ' ADD COLUMN IF NOT EXISTS estudio_id UUID';
+        EXECUTE 'ALTER TABLE ' || quote_ident(t) || ' ADD COLUMN IF NOT EXISTS documento_url TEXT';
+        EXECUTE 'ALTER TABLE ' || quote_ident(t) || ' ADD COLUMN IF NOT EXISTS numero_operacion TEXT';
+        EXECUTE 'ALTER TABLE ' || quote_ident(t) || ' ADD COLUMN IF NOT EXISTS nombre_documento_ocr TEXT';
         EXECUTE 'ALTER TABLE ' || quote_ident(t) || ' ADD COLUMN IF NOT EXISTS texto_estructurado JSONB DEFAULT NULL';
         EXECUTE 'ALTER TABLE ' || quote_ident(t) || ' ADD COLUMN IF NOT EXISTS analisis_integridad JSONB DEFAULT NULL';
         EXECUTE 'ALTER TABLE ' || quote_ident(t) || ' ADD COLUMN IF NOT EXISTS extraccion_datos JSONB DEFAULT NULL';
     END LOOP;
 
     -- 2. Drop all columns EXCEPT the whitelisted ones
-    -- Whitelist: id, user_id, estudio_id, documento_url, numero_operacion, nombre_documento_ocr,
-    --            texto_estructurado, analisis_integridad, extraccion_datos.
-    -- NOTICE: 'created_at' and 'updated_at' are deliberately excluded and accepted to be dropped based on user request.
     FOR r IN
         SELECT table_name, column_name
         FROM information_schema.columns
         WHERE table_schema = 'public'
           AND table_name LIKE 'ocr_%'
           AND column_name NOT IN (
-              'id', 
-              'user_id', 
-              'estudio_id', 
-              'documento_url', 
-              'numero_operacion', 
-              'nombre_documento_ocr',
-              'texto_estructurado', 
-              'analisis_integridad', 
-              'extraccion_datos'
+              'id', 'user_id', 'estudio_id', 'documento_url', 'numero_operacion', 
+              'nombre_documento_ocr', 'texto_estructurado', 'analisis_integridad', 'extraccion_datos'
           )
     LOOP
-        -- Using CASCADE to drop dependent objects (like views or constraints involving these columns)
         EXECUTE 'ALTER TABLE ' || quote_ident(r.table_name) || ' DROP COLUMN IF EXISTS ' || quote_ident(r.column_name) || ' CASCADE';
     END LOOP;
 END $$;

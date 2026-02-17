@@ -103,7 +103,7 @@ Ya **NO** existen columnas específicas como `fojas`, `numero`, `anio`, `comuna`
 - `ocr_constitucion_sociedad`
 - `ocr_deuda_contribuciones`
 - `ocr_directorio`
-- `ocr_dominio_vigente` (Incluye columna adicional: `naturaleza_acto`)
+- `ocr_dominio_vigente` (Incluye columna adicional: `naturaleza_acto` - TEXT que describe la naturaleza del acto jurídico)
 - `ocr_donacion`
 - `ocr_escritura_constitucion_aporte`
 - `ocr_escritura_cv` (Incluye columna adicional: `se_constituye_gravamen`)
