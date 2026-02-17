@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }) => {
                 password,
                 options: {
                     data: metadata,
-                    emailRedirectTo: window.location.origin
+                    emailRedirectTo: `${window.location.origin}/panel`
                 }
             });
 
