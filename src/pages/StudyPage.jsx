@@ -1390,7 +1390,7 @@ export default function StudyPage() {
                             Refrescar
                         </button>
                         <button
-                            onClick={() => navigate('/dashboard')}
+                            onClick={() => navigate('/panel/dashboard')}
                             className="text-slate-500 hover:text-slate-700 font-medium"
                         >
                             Dashboard

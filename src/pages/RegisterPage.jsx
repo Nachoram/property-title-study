@@ -131,7 +131,7 @@ const RegisterPage = () => {
             // Check if email confirmation is required
             if (data?.user?.identities?.length === 0) {
                 toast.info('Por favor revisa tu email para confirmar tu cuenta.', { duration: 5000 });
-                navigate('/login');
+                navigate('/panel/login');
             } else {
                 navigate('/dashboard');
             }
@@ -290,7 +290,7 @@ const RegisterPage = () => {
                             <p className="text-slate-500">
                                 ¿Ya tienes cuenta?{' '}
                                 <Link
-                                    to="/login"
+                                    to="/panel/login"
                                     className="text-blue-600 hover:text-blue-800 font-semibold transition-colors"
                                 >
                                     Inicia sesión
