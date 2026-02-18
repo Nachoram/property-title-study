@@ -60,7 +60,7 @@ const Dashboard = () => {
         if (error) {
             toast.error('Error al cerrar sesión');
         } else {
-            navigate('/panel/login');
+            navigate('/login');
         }
     };
 
@@ -173,7 +173,7 @@ const Dashboard = () => {
                                 </button>
                                 <div className="border-t border-slate-100 my-1"></div>
                                 <button
-                                    onClick={() => navigate('/panel/admin/requests')}
+                                    onClick={() => navigate('/admin/requests')}
                                     className="w-full px-4 py-2.5 text-left text-blue-600 hover:bg-blue-50 flex items-center gap-2 transition-colors text-sm font-medium"
                                 >
                                     <ShieldCheck size={18} />
@@ -271,7 +271,7 @@ const Dashboard = () => {
 
                     {/* New Study Button */}
                     <Link
-                        to="/panel/estudio/nuevo"
+                        to="/estudio/nuevo"
                         className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30"
                     >
                         <Plus size={20} />
@@ -300,7 +300,7 @@ const Dashboard = () => {
                         </p>
                         {estudios.length === 0 && (
                             <Link
-                                to="/panel/estudio/nuevo"
+                                to="/estudio/nuevo"
                                 className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all"
                             >
                                 <Plus size={20} />
@@ -317,7 +317,7 @@ const Dashboard = () => {
                             return (
                                 <Link
                                     key={estudio.id}
-                                    to={`/panel/estudio/${estudio.numero_operacion}`}
+                                    to={`/estudio/${estudio.numero_operacion}`}
                                     className="block bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg hover:border-blue-200 transition-all group"
                                 >
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

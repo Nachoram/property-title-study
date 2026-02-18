@@ -28,7 +28,7 @@ const PublicRoute = ({ children }) => {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/panel/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
@@ -37,59 +37,54 @@ const PublicRoute = ({ children }) => {
 export default function App() {
   return (
     <Routes>
-      <Route path="/panel">
-        {/* Public Routes */}
-        <Route
-          path="login"
-          element={
-            <PublicRoute>
-              <LoginPage />
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="register"
-          element={
-            <PublicRoute>
-              <RegisterPage />
-            </PublicRoute>
-          }
-        />
+      {/* Public Routes */}
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <LoginPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <PublicRoute>
+            <RegisterPage />
+          </PublicRoute>
+        }
+      />
 
-        {/* Protected Routes */}
-        <Route
-          path="dashboard"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="estudio/:operacionId"
-          element={
-            <PrivateRoute>
-              <StudyPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="admin/requests"
-          element={
-            <PrivateRoute>
-              <RequestDocsPage />
-            </PrivateRoute>
-          }
-        />
-
-        {/* Local redirects within /panel */}
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="*" element={<Navigate to="dashboard" replace />} />
-      </Route>
+      {/* Protected Routes */}
+      <Route
+        path="/dashboard"
+        element={
+          <PrivateRoute>
+            <Dashboard />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/estudio/:operacionId"
+        element={
+          <PrivateRoute>
+            <StudyPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/requests"
+        element={
+          <PrivateRoute>
+            <RequestDocsPage />
+          </PrivateRoute>
+        }
+      />
 
       {/* Global redirects */}
-      <Route path="/" element={<Navigate to="/panel" replace />} />
-      <Route path="*" element={<Navigate to="/panel" replace />} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/panel/*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }

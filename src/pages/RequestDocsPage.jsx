@@ -164,7 +164,7 @@ const RequestDocsPage = () => {
 
             <div className="max-w-6xl mx-auto">
                 <div className="flex items-center gap-4 mb-8">
-                    <button onClick={() => navigate('/panel/dashboard')} className="p-2 hover:bg-white rounded-full transition-colors">
+                    <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-white rounded-full transition-colors">
                         <ArrowLeft />
                     </button>
                     <h1 className="text-2xl font-bold text-slate-900">Gestor de Solicitudes (Admin)</h1>

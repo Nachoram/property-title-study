@@ -15,7 +15,7 @@ const LoginPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const from = location.state?.from?.pathname || '/panel/dashboard';
+    const from = location.state?.from?.pathname || '/dashboard';
 
     const validateForm = () => {
         const newErrors = {};
@@ -184,7 +184,7 @@ const LoginPage = () => {
                             <p className="text-slate-500">
                                 ¿No tienes cuenta?{' '}
                                 <Link
-                                    to="/panel/register"
+                                    to="/register"
                                     className="text-blue-600 hover:text-blue-800 font-semibold transition-colors"
                                 >
                                     Regístrate aquí
