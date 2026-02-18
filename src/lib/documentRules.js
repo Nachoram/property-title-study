@@ -142,9 +142,9 @@ const DOC_CATALOG = {
         icon: CircleDollarSign,
         category: 'titulos'
     },
-    INSCRIPCION_ESPECIAL_HERENCIA: {
-        id: 'inscripcion_herencia',
-        label: 'Inscripción Especial de Herencia',
+    INSCRIPCION_POSESION_EFECTIVA: {
+        id: 'inscripcion_posesion_efectiva',
+        label: 'Inscripción de Posesión Efectiva',
         description: 'CBR. A nombre de la sucesión.',
         icon: FileText,
         category: 'titulos'

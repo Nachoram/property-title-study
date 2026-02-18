@@ -117,7 +117,7 @@ Ya **NO** existen columnas específicas como `fojas`, `numero`, `anio`, `comuna`
 - `ocr_impuesto_herencia`
 - `ocr_informe_no_matrimonio`
 - `ocr_inscripcion_comercio`
-- `ocr_inscripcion_herencia`
+- `ocr_inscripcion_posesion_efectiva`
 - `ocr_inscripcion_servidumbre`
 - `ocr_matrimonio`
 - `ocr_nacimiento`

@@ -14,6 +14,151 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_google_tokens: {
+        Row: {
+          created_at: string | null
+          id: string
+          provider_access_token: string | null
+          provider_refresh_token: string
+          token_updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          provider_access_token?: string | null
+          provider_refresh_token: string
+          token_updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          provider_access_token?: string | null
+          provider_refresh_token?: string
+          token_updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      agenda_items: {
+        Row: {
+          agenda_id: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          is_completed: boolean | null
+          order_index: number | null
+          presenter: string | null
+          title: string
+        }
+        Insert: {
+          agenda_id?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_completed?: boolean | null
+          order_index?: number | null
+          presenter?: string | null
+          title: string
+        }
+        Update: {
+          agenda_id?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_completed?: boolean | null
+          order_index?: number | null
+          presenter?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_items_agenda_id_fkey"
+            columns: ["agenda_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_agendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_events: {
+        Row: {
+          calendar_id: string | null
+          created_at: string | null
+          description: string | null
+          end_time: string
+          id: string
+          is_all_day: boolean | null
+          location: string | null
+          meeting_link: string | null
+          start_time: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          calendar_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_time: string
+          id?: string
+          is_all_day?: boolean | null
+          location?: string | null
+          meeting_link?: string | null
+          start_time: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          calendar_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_time?: string
+          id?: string
+          is_all_day?: boolean | null
+          location?: string | null
+          meeting_link?: string | null
+          start_time?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendars: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          name: string
+          user_id: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          name: string
+          user_id?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       debug_logs: {
         Row: {
           created_at: string | null
@@ -129,6 +274,41 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      meeting_agendas: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          event_id: string | null
+          id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_agendas_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ocr_asignacion_roles: {
         Row: {
@@ -453,27 +633,33 @@ export type Database = {
       ocr_directorio: {
         Row: {
           analisis_integridad: Json | null
+          documento_url: string | null
           estudio_id: string | null
           extraccion_datos: Json | null
           id: string
+          nombre_documento_ocr: string | null
           numero_operacion: string | null
           texto_estructurado: Json | null
           user_id: string
         }
         Insert: {
           analisis_integridad?: Json | null
+          documento_url?: string | null
           estudio_id?: string | null
           extraccion_datos?: Json | null
           id?: string
+          nombre_documento_ocr?: string | null
           numero_operacion?: string | null
           texto_estructurado?: Json | null
           user_id: string
         }
         Update: {
           analisis_integridad?: Json | null
+          documento_url?: string | null
           estudio_id?: string | null
           extraccion_datos?: Json | null
           id?: string
+          nombre_documento_ocr?: string | null
           numero_operacion?: string | null
           texto_estructurado?: Json | null
           user_id?: string
@@ -495,9 +681,9 @@ export type Database = {
           estudio_id: string | null
           extraccion_datos: Json | null
           id: string
+          naturaleza_acto: string | null
           nombre_documento_ocr: string | null
           numero_operacion: string | null
-          naturaleza_acto: string | null
           texto_estructurado: Json | null
           user_id: string
         }
@@ -507,9 +693,9 @@ export type Database = {
           estudio_id?: string | null
           extraccion_datos?: Json | null
           id?: string
+          naturaleza_acto?: string | null
           nombre_documento_ocr?: string | null
           numero_operacion?: string | null
-          naturaleza_acto?: string | null
           texto_estructurado?: Json | null
           user_id: string
         }
@@ -519,9 +705,9 @@ export type Database = {
           estudio_id?: string | null
           extraccion_datos?: Json | null
           id?: string
+          naturaleza_acto?: string | null
           nombre_documento_ocr?: string | null
           numero_operacion?: string | null
-          naturaleza_acto?: string | null
           texto_estructurado?: Json | null
           user_id?: string
         }
@@ -530,6 +716,7 @@ export type Database = {
       ocr_donacion: {
         Row: {
           analisis_integridad: Json | null
+          documento_url: string | null
           estudio_id: string | null
           extraccion_datos: Json | null
           id: string
@@ -540,6 +727,7 @@ export type Database = {
         }
         Insert: {
           analisis_integridad?: Json | null
+          documento_url?: string | null
           estudio_id?: string | null
           extraccion_datos?: Json | null
           id?: string
@@ -550,6 +738,7 @@ export type Database = {
         }
         Update: {
           analisis_integridad?: Json | null
+          documento_url?: string | null
           estudio_id?: string | null
           extraccion_datos?: Json | null
           id?: string
@@ -561,6 +750,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ocr_donacion_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_escritura_arrendamiento: {
+        Row: {
+          analisis_integridad: Json | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_escritura_arrendamiento_estudio_id_fkey"
             columns: ["estudio_id"]
             isOneToOne: false
             referencedRelation: "estudios_titulos"
@@ -732,50 +965,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ocr_escritura_saneamiento_estudio_id_fkey"
-            columns: ["estudio_id"]
-            isOneToOne: false
-            referencedRelation: "estudios_titulos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ocr_escritura_arrendamiento: {
-        Row: {
-          analisis_integridad: Json | null
-          documento_url: string | null
-          estudio_id: string | null
-          extraccion_datos: Json | null
-          id: string
-          nombre_documento_ocr: string | null
-          numero_operacion: string | null
-          texto_estructurado: Json | null
-          user_id: string | null
-        }
-        Insert: {
-          analisis_integridad?: Json | null
-          documento_url?: string | null
-          estudio_id?: string | null
-          extraccion_datos?: Json | null
-          id?: string
-          nombre_documento_ocr?: string | null
-          numero_operacion?: string | null
-          texto_estructurado?: Json | null
-          user_id?: string | null
-        }
-        Update: {
-          analisis_integridad?: Json | null
-          documento_url?: string | null
-          estudio_id?: string | null
-          extraccion_datos?: Json | null
-          id?: string
-          nombre_documento_ocr?: string | null
-          numero_operacion?: string | null
-          texto_estructurado?: Json | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ocr_escritura_arrendamiento_estudio_id_fkey"
             columns: ["estudio_id"]
             isOneToOne: false
             referencedRelation: "estudios_titulos"
@@ -1083,7 +1272,7 @@ export type Database = {
           },
         ]
       }
-      ocr_inscripcion_herencia: {
+      ocr_inscripcion_posesion_efectiva: {
         Row: {
           analisis_integridad: Json | null
           documento_url: string | null
@@ -1721,116 +1910,116 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-  : never = never,
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-  ? R
-  : never
+    ? R
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R
-    }
-  ? R
-  : never
-  : never
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
+      Insert: infer I
+    }
+    ? I
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Update: infer U
-  }
-  ? U
-  : never
+      Update: infer U
+    }
+    ? U
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Update: infer U
-  }
-  ? U
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-  | keyof DefaultSchema["Enums"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-  | keyof DefaultSchema["CompositeTypes"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
   public: {
