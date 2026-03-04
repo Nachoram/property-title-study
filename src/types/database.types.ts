@@ -82,6 +82,89 @@ export type Database = {
           },
         ]
       }
+      cadena_dominios: {
+        Row: {
+          alerta_adulteracion: string | null
+          auditoria_detalle: Json | null
+          causante_identificado: string | null
+          conclusion_feliu: string | null
+          created_at: string | null
+          datos_correctos: string | null
+          documentos_faltantes: Json | null
+          estudio_id: string | null
+          hallazgos: Json | null
+          id: string
+          indice_cadena: number | null
+          numero_operacion: string | null
+          referencia_inscripcion_anterior: string | null
+          reparo_defuncion: string | null
+          reparo_no_correcto: string | null
+          reparo_no_exibicion: Json | null
+          reparo_porecentage_munuscrita: string | null
+          reparo_vigencia: string | null
+          resumen_cadena: string | null
+          timestamp_estudio: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          alerta_adulteracion?: string | null
+          auditoria_detalle?: Json | null
+          causante_identificado?: string | null
+          conclusion_feliu?: string | null
+          created_at?: string | null
+          datos_correctos?: string | null
+          documentos_faltantes?: Json | null
+          estudio_id?: string | null
+          hallazgos?: Json | null
+          id?: string
+          indice_cadena?: number | null
+          numero_operacion?: string | null
+          referencia_inscripcion_anterior?: string | null
+          reparo_defuncion?: string | null
+          reparo_no_correcto?: string | null
+          reparo_no_exibicion?: Json | null
+          reparo_porecentage_munuscrita?: string | null
+          reparo_vigencia?: string | null
+          resumen_cadena?: string | null
+          timestamp_estudio?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          alerta_adulteracion?: string | null
+          auditoria_detalle?: Json | null
+          causante_identificado?: string | null
+          conclusion_feliu?: string | null
+          created_at?: string | null
+          datos_correctos?: string | null
+          documentos_faltantes?: Json | null
+          estudio_id?: string | null
+          hallazgos?: Json | null
+          id?: string
+          indice_cadena?: number | null
+          numero_operacion?: string | null
+          referencia_inscripcion_anterior?: string | null
+          reparo_defuncion?: string | null
+          reparo_no_correcto?: string | null
+          reparo_no_exibicion?: Json | null
+          reparo_porecentage_munuscrita?: string | null
+          reparo_vigencia?: string | null
+          resumen_cadena?: string | null
+          timestamp_estudio?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cadena_dominios_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           calendar_id: string | null
@@ -434,6 +517,234 @@ export type Database = {
           },
         ]
       }
+      ocr_certificado_asignacion_roles_sii: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_cert_asig_roles_sii_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_certificado_asignacion_roles_sii_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_certificado_defuncion: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_cert_def_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_certificado_defuncion_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_certificado_informaciones_previas: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_cert_inf_esprev_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_certificado_informacion_esprevias_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_certificado_inscripcion_interdiccion: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_cert_insc_int_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_certificado_inscripcion_interdiccion_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ocr_certificado_numero: {
         Row: {
           analisis_integridad: Json | null
@@ -757,6 +1068,120 @@ export type Database = {
           },
         ]
       }
+      ocr_escritura_adjudicacion_particion_herencia: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_esc_adj_part_her_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_escritura_adjudicacion_particion_herencia_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_escritura_aporte_capital: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_esc_ap_cap_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_escritura_aporte_capital_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ocr_escritura_arrendamiento: {
         Row: {
           analisis_integridad: Json | null
@@ -884,6 +1309,120 @@ export type Database = {
         }
         Relationships: []
       }
+      ocr_escritura_hipoteca: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_esc_hip_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_escritura_hipoteca_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_escritura_permuta: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_esc_perm_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_escritura_permuta_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ocr_escritura_reciliacion: {
         Row: {
           analisis_integridad: Json | null
@@ -965,6 +1504,120 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ocr_escritura_saneamiento_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_escritura_servidumbre: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_esc_serv_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_escritura_servidumbre_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_escritura_usufructo: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_esc_usu_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_escritura_usufructo_estudio_id_fkey"
             columns: ["estudio_id"]
             isOneToOne: false
             referencedRelation: "estudios_titulos"
@@ -1099,6 +1752,7 @@ export type Database = {
       ocr_gp: {
         Row: {
           analisis_integridad: Json | null
+          created_at: string | null
           documento_url: string | null
           estudio_id: string | null
           extraccion_datos: Json | null
@@ -1106,10 +1760,23 @@ export type Database = {
           nombre_documento_ocr: string | null
           numero_operacion: string | null
           texto_estructurado: Json | null
+          tiene_censos: boolean | null
+          tiene_embargos: boolean | null
+          tiene_hipotecas: boolean | null
+          tiene_interdicciones: boolean | null
+          tiene_litigios: boolean | null
+          tiene_medidas_precautorias: boolean | null
+          tiene_prohibiciones_legales_serviu: boolean | null
+          tiene_prohibiciones_voluntarias: boolean | null
+          tiene_reglamento_copropiedad: boolean | null
+          tiene_servidumbres: boolean | null
+          tiene_usufructos_uso_habitacion: boolean | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           analisis_integridad?: Json | null
+          created_at?: string | null
           documento_url?: string | null
           estudio_id?: string | null
           extraccion_datos?: Json | null
@@ -1117,10 +1784,23 @@ export type Database = {
           nombre_documento_ocr?: string | null
           numero_operacion?: string | null
           texto_estructurado?: Json | null
+          tiene_censos?: boolean | null
+          tiene_embargos?: boolean | null
+          tiene_hipotecas?: boolean | null
+          tiene_interdicciones?: boolean | null
+          tiene_litigios?: boolean | null
+          tiene_medidas_precautorias?: boolean | null
+          tiene_prohibiciones_legales_serviu?: boolean | null
+          tiene_prohibiciones_voluntarias?: boolean | null
+          tiene_reglamento_copropiedad?: boolean | null
+          tiene_servidumbres?: boolean | null
+          tiene_usufructos_uso_habitacion?: boolean | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           analisis_integridad?: Json | null
+          created_at?: string | null
           documento_url?: string | null
           estudio_id?: string | null
           extraccion_datos?: Json | null
@@ -1128,6 +1808,18 @@ export type Database = {
           nombre_documento_ocr?: string | null
           numero_operacion?: string | null
           texto_estructurado?: Json | null
+          tiene_censos?: boolean | null
+          tiene_embargos?: boolean | null
+          tiene_hipotecas?: boolean | null
+          tiene_interdicciones?: boolean | null
+          tiene_litigios?: boolean | null
+          tiene_medidas_precautorias?: boolean | null
+          tiene_prohibiciones_legales_serviu?: boolean | null
+          tiene_prohibiciones_voluntarias?: boolean | null
+          tiene_reglamento_copropiedad?: boolean | null
+          tiene_servidumbres?: boolean | null
+          tiene_usufructos_uso_habitacion?: boolean | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -1228,6 +1920,63 @@ export type Database = {
           },
         ]
       }
+      ocr_inscripcion_arrendamiento: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_insc_arr_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_inscripcion_arrendamiento_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ocr_inscripcion_comercio: {
         Row: {
           analisis_integridad: Json | null
@@ -1265,6 +2014,177 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ocr_inscripcion_comercio_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_inscripcion_embargo: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_insc_emb_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_inscripcion_embargo_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_inscripcion_especial_herencia: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_insc_esp_her_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_inscripcion_especial_herencia_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_inscripcion_hipoteca: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_insc_hip_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_inscripcion_hipoteca_estudio_id_fkey"
             columns: ["estudio_id"]
             isOneToOne: false
             referencedRelation: "estudios_titulos"
@@ -1316,6 +2236,63 @@ export type Database = {
           },
         ]
       }
+      ocr_inscripcion_reglamento_copropiedad: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_insc_reg_cop_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_inscripcion_reglamento_copropiedad_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ocr_inscripcion_servidumbre: {
         Row: {
           analisis_integridad: Json | null
@@ -1351,6 +2328,63 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ocr_inscripcion_usufructo: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_insc_usu_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_inscripcion_usufructo_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ocr_matrimonio: {
         Row: {
@@ -1520,6 +2554,63 @@ export type Database = {
           },
         ]
       }
+      ocr_plano_subdivision_sag_cbr: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_plano_sub_sag_cbr_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_plano_subdivision_sag_cbr_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ocr_poderes: {
         Row: {
           analisis_integridad: Json | null
@@ -1664,6 +2755,63 @@ export type Database = {
         }
         Relationships: []
       }
+      ocr_resolucion_embargo: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_res_emb_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_resolucion_embargo_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ocr_rural_sag: {
         Row: {
           analisis_integridad: Json | null
@@ -1699,6 +2847,177 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ocr_sentencia_adjudicacion_remate: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_sent_adj_rem_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_sentencia_adjudicacion_remate_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_sentencia_donacion: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_sent_don_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_sentencia_donacion_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_sentencia_interdiccion: {
+        Row: {
+          analisis_integridad: Json | null
+          created_at: string | null
+          documento_url: string | null
+          estudio_id: string | null
+          extraccion_datos: Json | null
+          id: string
+          nombre_documento_ocr: string | null
+          numero_operacion: string | null
+          texto_estructurado: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analisis_integridad?: Json | null
+          created_at?: string | null
+          documento_url?: string | null
+          estudio_id?: string | null
+          extraccion_datos?: Json | null
+          id?: string
+          nombre_documento_ocr?: string | null
+          numero_operacion?: string | null
+          texto_estructurado?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_sent_int_num_op_fkey"
+            columns: ["numero_operacion"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["numero_operacion"]
+          },
+          {
+            foreignKeyName: "ocr_sentencia_interdiccion_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios_titulos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ocr_vigencia_poderes: {
         Row: {

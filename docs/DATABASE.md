@@ -97,6 +97,7 @@ Ya **NO** existen columnas específicas como `fojas`, `numero`, `anio`, `comuna`
 - `ocr_asignacion_roles`
 - `ocr_avaluo_fiscal`
 - `ocr_cedula_identidad`
+- `ocr_certificado_defuncion`
 - `ocr_certificado_numero`
 - `ocr_cesion_derechos_hereditario`
 - `ocr_cip`
@@ -113,16 +114,36 @@ Ya **NO** existen columnas específicas como `fojas`, `numero`, `anio`, `comuna`
 - `ocr_estatutos_sociales`
 - `ocr_expropiacion_municipal`
 - `ocr_gasto_comun`
-- `ocr_gp`
+- `ocr_gp` (Incluye columnas adicionales booleanas: `tiene_hipotecas`, `tiene_servidumbres`, `tiene_usufructos_uso_habitacion`, `tiene_reglamento_copropiedad`, `tiene_censos`, `tiene_embargos`, `tiene_medidas_precautorias`, `tiene_prohibiciones_voluntarias`, `tiene_prohibiciones_legales_serviu`, `tiene_interdicciones`, `tiene_litigios`)
 - `ocr_impuesto_herencia`
 - `ocr_informe_no_matrimonio`
+- `ocr_inscripcion_arrendamiento`
 - `ocr_inscripcion_comercio`
+- `ocr_inscripcion_embargo`
+- `ocr_inscripcion_especial_herencia`
+- `ocr_inscripcion_hipoteca`
 - `ocr_inscripcion_posesion_efectiva`
+- `ocr_inscripcion_reglamento_copropiedad`
 - `ocr_inscripcion_servidumbre`
+- `ocr_inscripcion_usufructo`
+- `ocr_certificado_informacion_esprevias`
+- `ocr_certificado_inscripcion_interdiccion`
+- `ocr_certificado_asignacion_roles_sii`
+- `ocr_escritura_adjudicacion_particion_herencia`
+- `ocr_escritura_aporte_capital`
+- `ocr_escritura_hipoteca`
+- `ocr_escritura_permuta`
+- `ocr_escritura_servidumbre`
+- `ocr_escritura_usufructo`
+- `ocr_resolucion_embargo`
+- `ocr_sentencia_adjudicacion_remate`
+- `ocr_sentencia_donacion`
+- `ocr_sentencia_interdiccion`
 - `ocr_matrimonio`
 - `ocr_nacimiento`
 - `ocr_no_expropiacion_serviu`
 - `ocr_plano_copropiedad`
+- `ocr_plano_subdivision_sag_cbr`
 - `ocr_poderes`
 - `ocr_posesion_efectiva`
 - `ocr_recepcion_final`
@@ -132,7 +153,37 @@ Ya **NO** existen columnas específicas como `fojas`, `numero`, `anio`, `comuna`
 
 ---
 
-## 3. Automatización y Triggers
+## 3. Tablas de Análisis y Resultados
+
+### `cadena_dominios`
+Esta tabla almacena el análisis detallado de la cadena de dominios, hallazgos técnicos, alertas y conclusiones jurídicas.
+
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `id` | UUID | Identificador único. |
+| `user_id` | UUID | Referencia al usuario (`auth.users`). |
+| `estudio_id` | UUID | Relación con `estudios_titulos`. |
+| `numero_operacion` | TEXT | Identificador de la operación. |
+| `indice_cadena` | INTEGER | Posición de este eslabón en la cadena. |
+| `causante_identificado` | TEXT | Nombre del causante si aplica (en sucesiones). |
+| `timestamp_estudio` | TIMESTAMPTZ | Fecha y hora del análisis. |
+| `resumen_cadena` | TEXT | Descripción narrativa de la cadena/inscripción. |
+| `datos_correctos` | TEXT | Validación de binomio Título/Modo y datos registrales. |
+| `reparo_no_correcto` | TEXT | Observaciones sobre errores en los datos. |
+| `reparo_no_exibicion` | JSONB | Lista de reparos por falta de documentos de exhibición. |
+| `reparo_vigencia` | TEXT | Observaciones sobre la vigencia de los documentos. |
+| `reparo_defuncion` | TEXT | Observaciones relacionadas a certificados de defunción. |
+| `alerta_adulteracion` | TEXT | Alertas sobre posibles adulteraciones o inconsistencias graves. |
+| `reparo_porecentage_munuscrita` | TEXT | Observaciones sobre porcentajes manuscritos en inscripciones. |
+| `referencia_inscripcion_anterior` | TEXT | Fojas, Número y Año de la inscripción precedente. |
+| `auditoria_detalle` | JSONB | Checks de identidad, capacidad, personería, tracto, etc. |
+| `hallazgos` | JSONB | Arreglo de hallazgos clasificados por pilar (Identidad, Capacidad, Registral). |
+| `conclusion_feliu` | TEXT | Conclusión jurídica final del análisis. |
+| `documentos_faltantes` | JSONB | Arreglo de strings con los documentos que faltan por actualizar o presentar. |
+
+---
+
+## 4. Automatización y Triggers
 
 ### Automatización de Carga (`handle_storage_upload`)
 Este es un **Trigger** de PostgreSQL que se ejecuta `AFTER INSERT` en la tabla `storage.objects` (donde Supabase guarda los archivos).
